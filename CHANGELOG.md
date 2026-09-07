@@ -65,7 +65,7 @@ Fixes for the findings in the code audit of this fork (4 critical, 9 high,
 - **M1** — The request retried after a session refresh is checked.
 - **M2** — 429 raises `EeroRateLimited` carrying `Retry-After`. Release notes
   are cached per manifest URL instead of refetched every poll. The polling
-  floor moves 30s → 120s and the default 120s → 300s.
+  floor moves 30s → 60s and the default 120s → 300s.
 - **M9** — Entity discovery no longer uses bare `hasattr`, so one broken
   property cannot abort a whole platform's setup and failures are logged.
   (Partial: the audit's declarative `supported_resources` redesign was not
@@ -113,10 +113,49 @@ Fixes for the findings in the code audit of this fork (4 critical, 9 high,
 - `light.turn_on` with `brightness: 1` mapped to 0 and turned the light off.
   Clamped to 1.
 
+### Post-review fixes
+
+An independent review of these changes raised one blocking regression and
+seven smaller items, all fixed here.
+
+- **B1** — Home Assistant fires an entry's update listeners on any change,
+  data included, so the token written back by the H2 fix reloaded the whole
+  integration on every session rotation: entities removed and re-added,
+  `consider_home` clocks reset, the `requests.Session` closed under an
+  executor thread, and a second poll started on top of the one in flight.
+  `async_update_listener` now reloads only when the options changed or when
+  the entry's token differs from the one the running API object holds, which
+  is true of a token from the reauth flow and false of one this integration
+  persisted itself.
+- **N1** — The asyncio timeout around the whole poll is gone. It gave the
+  entire multi-request poll the budget of one request, and cancelling it never
+  killed the executor thread, which is what H1's per-request timeout is for.
+- **N2** — A failed release-notes fetch logs a warning instead of failing the
+  poll. A 404 on the firmware manifest used to take every entity in the house
+  unavailable over a decoration on the update entities.
+- **N3** — A release-notes URL on an unexpected host is refused once and the
+  refusal cached, instead of warning every poll forever.
+- **N4** — The reauth step passes `reload_even_if_entry_is_unchanged=False`.
+  Asking `async_update_reload_and_abort` to schedule a reload on an entry that
+  has an update listener is deprecated and breaks in Home Assistant 2026.12;
+  the listener owns the reload.
+- **N5** — Reauth fails closed when the verification response carries no
+  `log_id`, rather than skipping the wrong-account check and writing the token
+  in unverified.
+- **N6** — An account response with no `networks` member raises instead of
+  building an empty account. On a cold start it used to set the integration up
+  successfully with no entities and no reason logged.
+- **N7** — The scan interval is clamped to the floor when read, in both the
+  setup path and the options form, so a stored value below a raised floor
+  cannot make the form unsubmittable. The floor is 60s (the default stays
+  300s).
+- **N8** — Comment only: `device_info` returning None is permanent, since
+  Home Assistant reads it once at registration.
+
 ### Tests
 
-`tests/` holds a pytest suite for the api package that runs without Home
-Assistant installed:
+`tests/` holds 41 tests for the api package, running without Home Assistant
+installed:
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install pytest requests
