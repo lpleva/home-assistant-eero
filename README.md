@@ -1,3 +1,17 @@
+## About this fork
+
+This is Lukas Pleva's audited fork of [schmittx/home-assistant-eero](https://github.com/schmittx/home-assistant-eero), taken at upstream version 1.8.1; this fork is version 1.9.1. It exists because every integration that holds a login or can act on the house gets a line-by-line audit before it runs in his Home Assistant, and the fixes live here rather than upstream.
+
+**Why it was forked.** Upstream's device tracker broke on Home Assistant 2026.7 and the project went quiet with the fix sitting in an unmerged pull request, so the only way to run working code was to carry it ourselves.
+
+**What is different.** It merges upstream pull requests #170, #169, #171 and #174 (the 2026.7 device-tracker fix, a Python 3.14 crash fix, a bug-fix bundle, and per-client band, channel and width). A full code audit then found 33 issues and every one is fixed here: the session token is never written to disk or logged, API errors no longer dump response bodies (which carried the wifi password and Thread key) into the log, an expired session raises a re-authentication prompt instead of crashing in a loop, failed polls make entities unavailable instead of freezing on stale data, HTTP calls have timeouts, several crash paths on missing fields are closed, the image platform and its two abandoned dependencies are gone, and a test suite (42 tests, no Home Assistant needed) was added. An independent review then found and fixed one more defect: a token refresh no longer reloads the whole integration. Fixes are not sent upstream; upstream is unchanged by this fork.
+
+**How it is kept current.** A weekly job merges upstream's new commits onto a branch, runs this fork's tests, reviews the diff, and only then pushes; a merge conflict or a failing test stops it. The fork is installed through HACS as a custom repository, so Home Assistant offers each new version as an update.
+
+**Where the detail is.** CHANGELOG.md record every change by audit finding.
+
+---
+
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 # Eero Home Assistant Integration
 Custom component to allow control of Eero networks in [Home Assistant](https://home-assistant.io).
