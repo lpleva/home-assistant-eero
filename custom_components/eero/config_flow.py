@@ -610,6 +610,10 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             CONF_LOGIN: self.reauth_login,
                             CONF_USER_TOKEN: self.reauth_token,
                         },
+                        # This entry has an update listener, which owns the
+                        # reload. Asking for one here as well is deprecated and
+                        # breaks in Home Assistant 2026.12.
+                        reload_even_if_entry_is_unchanged=False,
                     )
 
         return self.async_show_form(
