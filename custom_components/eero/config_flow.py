@@ -585,7 +585,7 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input:
             try:
-                await self.hass.async_add_executor_job(
+                response = await self.hass.async_add_executor_job(
                     self.api.login_verify,
                     user_input[CONF_CODE],
                 )
@@ -595,6 +595,9 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 errors["base"] = "invalid_code"
             else:
+                if log_id := (response or {}).get("log_id"):
+                    await self.async_set_unique_id(log_id.lower())
+                    self._abort_if_unique_id_mismatch(reason="wrong_account")
                 return self.async_update_reload_and_abort(
                     self._get_reauth_entry(),
                     data_updates={
@@ -1011,6 +1014,7 @@ class EeroOptionsFlowHandler(config_entries.OptionsFlow):
                 conf_suffix_connection_type = conf_miscellaneous.get(
                     CONF_SUFFIX_CONNECTION_TYPE, DEFAULT_SUFFIX_CONNECTION_TYPE
                 )
+
                 return self.async_show_form(
                     step_id="miscellaneous",
                     data_schema=vol.Schema(

@@ -2,7 +2,8 @@
     "config": {
         "abort": {
             "already_configured": "The desired network is already configured",
-            "reauth_successful": "Re-authentication was successful"
+            "reauth_successful": "Re-authentication was successful",
+            "wrong_account": "The verified account is not the account this entry was set up with"
         },
         "error": {
             "invalid_code": "Invalid code",
