@@ -81,6 +81,7 @@ from .const import (
     DEFAULT_WIRELESS_CLIENTS_FILTER,
     DOMAIN,
     MANUFACTURER,
+    MIN_SCAN_INTERVAL,
     MODEL_BACKUP_NETWORK,
     MODEL_CLIENT_WIRED,
     MODEL_CLIENT_WIRELESS,
@@ -254,8 +255,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     conf_save_responses = options.get(
         CONF_SAVE_RESPONSES, data.get(CONF_SAVE_RESPONSES, DEFAULT_SAVE_RESPONSES)
     )
-    conf_scan_interval = options.get(
-        CONF_SCAN_INTERVAL, data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    # Clamped: an entry stored before the floor was raised would otherwise
+    # poll faster than the integration now allows, and would fail validation
+    # the moment the advanced options form was submitted.
+    conf_scan_interval = max(
+        MIN_SCAN_INTERVAL,
+        options.get(
+            CONF_SCAN_INTERVAL, data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        ),
     )
     conf_timeout = options.get(CONF_TIMEOUT, data.get(CONF_TIMEOUT, DEFAULT_TIMEOUT))
 
@@ -455,8 +462,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
                 "Eero session expired, please sign in again"
             ) from error
         except EeroRateLimited as error:
+            retry_after = error.retry_after or "unknown"
             raise UpdateFailed(
-                f"Rate limited by the Eero API, retry after {error.retry_after or 'unknown'}s"
+                f"Rate limited by the Eero API, retry after {retry_after}s"
             ) from error
         except EeroException as error:
             raise UpdateFailed(f"Error communicating with Eero API: {error}") from error

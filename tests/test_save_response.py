@@ -109,7 +109,9 @@ def test_release_notes_are_fetched_once_per_url(monkeypatch) -> None:
     assert calls == [MANIFEST]
 
 
-def test_a_failed_release_notes_fetch_does_not_fail_the_poll(monkeypatch, caplog) -> None:
+def test_a_failed_release_notes_fetch_does_not_fail_the_poll(
+    monkeypatch, caplog
+) -> None:
     """A 404 on the firmware manifest is a warning, not a dead network (N2)."""
     from eero_api import EeroUpdateConfig
 

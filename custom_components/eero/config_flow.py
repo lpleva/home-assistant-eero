@@ -1077,9 +1077,12 @@ class EeroOptionsFlowHandler(config_entries.OptionsFlow):
             CONF_SAVE_RESPONSES,
             self.data.get(CONF_SAVE_RESPONSES, DEFAULT_SAVE_RESPONSES),
         )
-        conf_scan_interval = self.options.get(
-            CONF_SCAN_INTERVAL,
-            self.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+        conf_scan_interval = max(
+            MIN_SCAN_INTERVAL,
+            self.options.get(
+                CONF_SCAN_INTERVAL,
+                self.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+            ),
         )
         conf_timeout = self.options.get(
             CONF_TIMEOUT, self.data.get(CONF_TIMEOUT, DEFAULT_TIMEOUT)
