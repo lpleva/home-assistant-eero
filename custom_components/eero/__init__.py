@@ -675,6 +675,16 @@ class EeroEntity(CoordinatorEntity):
         return f"{self.network_id}-{self.resource_id}-{self.entity_description.key}"
 
     @property
+    def network_device(self) -> dr.DeviceEntry | None:
+        """Return the registry entry for this entity's network device."""
+        if (config_entry := self.coordinator.config_entry) is None:
+            return None
+        registry = dr.async_get(self.coordinator.hass)
+        return registry.async_get_device_by_identifier(
+            (DOMAIN, self.network_id), config_entry.entry_id
+        )
+
+    @property
     def device_info(self) -> dr.DeviceInfo | None:
         """Return device specific attributes.
 
@@ -703,8 +713,7 @@ class EeroEntity(CoordinatorEntity):
         if self.prefix_network_name and not self.resource.is_network:
             name = f"{self.network.name} {name}"
 
-        entry_type, suggested_area, sw_version, hw_version, via_device = (
-            None,
+        entry_type, suggested_area, sw_version, hw_version = (
             None,
             None,
             None,
@@ -722,17 +731,7 @@ class EeroEntity(CoordinatorEntity):
             suggested_area = self.resource.location
             sw_version = self.resource.os_version
             hw_version = self.resource.model_number
-        if any(
-            [
-                self.resource.is_backup_network,
-                self.resource.is_eero,
-                self.resource.is_profile,
-                self.resource.is_client,
-            ]
-        ):
-            via_device = (DOMAIN, self.network.id)
-
-        return dr.DeviceInfo(
+        device_info = dr.DeviceInfo(
             entry_type=entry_type,
             hw_version=hw_version,
             identifiers={(DOMAIN, self.resource.id)},
@@ -741,8 +740,25 @@ class EeroEntity(CoordinatorEntity):
             name=name,
             suggested_area=suggested_area,
             sw_version=sw_version,
-            via_device=via_device,
         )
+        if any(
+            [
+                self.resource.is_backup_network,
+                self.resource.is_eero,
+                self.resource.is_profile,
+                self.resource.is_client,
+            ]
+        ):
+            # The link to the network device is set as via_device_id, a device
+            # registry ID; the identifier-tuple via_device is deprecated and is
+            # removed in Home Assistant 2027.8. The key is left out entirely
+            # when the network device cannot be found, because Home Assistant
+            # raises on an unknown via_device_id and the platform then drops the
+            # entity. async_setup_entry registers every configured network
+            # before it forwards the platforms, so the lookup finds it.
+            if (network_device := self.network_device) is not None:
+                device_info["via_device_id"] = network_device.id
+        return device_info
 
     @property
     def name(self) -> str | None:
