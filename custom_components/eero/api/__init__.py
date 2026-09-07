@@ -70,7 +70,11 @@ class EeroRateLimited(EeroException):
 class EeroAPI:
     """EeroAPI."""
 
-    ALLOWED_RELEASE_NOTE_HOSTS = frozenset({"eero.com", "e2ro.com"})
+    # Eero's own hosts, including subdomains. eeroassets.com is where the
+    # firmware manifest URL in the API response actually points.
+    ALLOWED_RELEASE_NOTE_HOSTS = frozenset(
+        {"eero.com", "e2ro.com", "eeroassets.com"}
+    )
 
     def __init__(
         self,

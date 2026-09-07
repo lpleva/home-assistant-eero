@@ -87,7 +87,28 @@ def test_release_notes_rejects_an_unexpected_host() -> None:
 
     assert api.get_release_notes("https://evil.example.com/manifest") is None
     assert api.get_release_notes("http://api-user.e2ro.com/manifest") is None
+    assert api.get_release_notes("https://eeroassets.com.evil.example/x") is None
+    assert api.get_release_notes("http://eeroassets.com/manifest") is None
     assert api.get_release_notes(None) is None
+
+
+def test_release_notes_allows_the_eero_asset_host(monkeypatch) -> None:
+    """eeroassets.com is where the real manifest URL points, so it is fetched."""
+    api = build_api({})
+    calls: list[str] = []
+
+    def fake_get(url, **kwargs):
+        calls.append(url)
+        return FakeResponse({"target": {"os_version": "7.6.1"}})
+
+    monkeypatch.setattr(eero_api.requests, "get", fake_get)
+
+    bare = "https://eeroassets.com/manifests/manifest-7.6.1"
+    subdomain = "https://d1n7v1ld1cnhbi.cloudfront.eeroassets.com/manifest-7.6.1"
+
+    assert api.get_release_notes(bare) == {"target": {"os_version": "7.6.1"}}
+    assert api.get_release_notes(subdomain) == {"target": {"os_version": "7.6.1"}}
+    assert calls == [bare, subdomain]
 
 
 def test_release_notes_are_fetched_once_per_url(monkeypatch) -> None:
