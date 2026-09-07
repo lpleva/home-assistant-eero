@@ -81,7 +81,7 @@ class EeroAPI:
     ) -> None:
         """Initialize."""
         self.data = EeroAccount(self, {})
-        self.release_notes_cache: dict[str, dict[str, Any]] = {}
+        self.release_notes_cache: dict[str, dict[str, Any] | None] = {}
         self.save_location = save_location
         self.session = requests.Session()
         self.user_token = user_token
@@ -194,6 +194,10 @@ class EeroAPI:
             _LOGGER.warning(
                 "Refusing to fetch release notes from unexpected host: %s", host
             )
+            # Remember the refusal: the manifest URL does not change between
+            # polls, and neither does the answer, so warn once rather than
+            # every poll forever.
+            self.release_notes_cache[url] = None
             return None
         # A bare request rather than self.session: the manifest URL comes from
         # the API response, and the session carries the account's cookie jar.

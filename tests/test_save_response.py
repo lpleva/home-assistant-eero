@@ -135,3 +135,13 @@ def test_a_failed_release_notes_fetch_does_not_fail_the_poll(monkeypatch, caplog
     assert account.networks[0].name == "TestNetwork"
     assert account.networks[0].firmware_history == []
     assert "Could not fetch release notes" in caplog.text
+
+
+def test_a_rejected_host_warns_once(caplog) -> None:
+    """The refusal is cached, so it does not warn on every poll (N3)."""
+    api = build_api({})
+
+    assert api.get_release_notes("https://evil.example.com/manifest") is None
+    assert api.get_release_notes("https://evil.example.com/manifest") is None
+
+    assert caplog.text.count("Refusing to fetch release notes") == 1
