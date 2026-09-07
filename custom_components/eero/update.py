@@ -126,8 +126,12 @@ class EeroUpdateEntity(EeroEntity, UpdateEntity):
 
     @property
     def supported_features(self) -> int:
-        """Flag supported features."""
-        if self.resource.target_firmware.features:
+        """Flag supported features.
+
+        Read even while unavailable, so it has to cope with a resource that is
+        no longer reported.
+        """
+        if self.resource is not None and self.resource.target_firmware.features:
             return UpdateEntityFeature.INSTALL | UpdateEntityFeature.RELEASE_NOTES
         return UpdateEntityFeature.INSTALL
 

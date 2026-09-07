@@ -99,7 +99,13 @@ class EeroSelectEntity(EeroEntity, SelectEntity):
 
     @property
     def options(self) -> list[str]:
-        """Return a set of selectable options."""
+        """Return a set of selectable options.
+
+        Read as a capability attribute even while unavailable, so it has to
+        cope with a resource that is no longer reported.
+        """
+        if self.resource is None:
+            return []
         return getattr(self.resource, self.entity_description.options)
 
     @property

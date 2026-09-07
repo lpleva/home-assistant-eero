@@ -425,8 +425,14 @@ class EeroSensorEntity(EeroEntity, SensorEntity):
 
     @property
     def native_unit_of_measurement(self) -> str | None:
-        """Return the unit of measurement of the sensor, if any."""
+        """Return the unit of measurement of the sensor, if any.
+
+        Home Assistant reads this even while the entity is unavailable, so it
+        has to cope with a resource that is no longer reported.
+        """
         if callable(self.entity_description.native_unit_of_measurement):
+            if self.resource is None:
+                return None
             return self.entity_description.native_unit_of_measurement(
                 self.resource, self.entity_description.key
             )
