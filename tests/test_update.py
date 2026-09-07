@@ -91,11 +91,20 @@ def test_network_entry_without_a_url_is_skipped() -> None:
     assert api.session.calls == [("GET", ACCOUNT)]
 
 
-def test_empty_account_response() -> None:
-    """An account with no networks member yields no networks."""
+def test_empty_account_response_raises() -> None:
+    """A body with no networks member is a failed poll, not zero entities (N6)."""
     api = build_api({ACCOUNT: ok({})})
 
-    assert api.update().networks == []
+    with pytest.raises(eero_api.EeroException):
+        api.update()
+
+
+def test_null_account_response_raises() -> None:
+    """Same for a 200 carrying no data at all (N6)."""
+    api = build_api({ACCOUNT: ok(None)})
+
+    with pytest.raises(eero_api.EeroException):
+        api.update()
 
 
 def test_update_raises_rather_than_returning_stale_data() -> None:

@@ -386,7 +386,12 @@ class EeroAPI:
         """
         if config is None:
             config = {}
-        account = self.call(method=METHOD_GET, url=URL_ACCOUNT) or {}
+        account = self.call(method=METHOD_GET, url=URL_ACCOUNT)
+        if not account or "networks" not in account:
+            # A 200 with a null or malformed body would otherwise build an
+            # account with no networks: on a cold start that sets the
+            # integration up with no entities at all and no reason logged.
+            raise EeroException(message="Account response reported no networks")
         networks = []
         for network in account.get("networks", {}).get("data", []):
             network_url = network.get("url")
