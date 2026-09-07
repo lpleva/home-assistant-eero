@@ -107,3 +107,31 @@ def test_release_notes_are_fetched_once_per_url(monkeypatch) -> None:
 
     assert first == second == {"target": {"os_version": "7.1.0"}}
     assert calls == [MANIFEST]
+
+
+def test_a_failed_release_notes_fetch_does_not_fail_the_poll(monkeypatch, caplog) -> None:
+    """A 404 on the firmware manifest is a warning, not a dead network (N2)."""
+    from eero_api import EeroUpdateConfig
+
+    network = "/2.2/networks/1234567"
+    api = build_api(
+        {
+            ACCOUNT: ok(fixture("account")),
+            network: ok(fixture("network")),
+            f"{network}/thread": ok(fixture("thread")),
+            f"{network}/devices": ok(fixture("devices")),
+            f"{network}/profiles": ok([]),
+            f"{network}/backup_access_points": ok([]),
+        }
+    )
+
+    def not_found(url, **kwargs):
+        return FakeResponse({}, status_code=404, reason="Not Found", url=url)
+
+    monkeypatch.setattr(eero_api.requests, "get", not_found)
+
+    account = api.update({"1234567": EeroUpdateConfig(get_release_notes=True)})
+
+    assert account.networks[0].name == "TestNetwork"
+    assert account.networks[0].firmware_history == []
+    assert "Could not fetch release notes" in caplog.text

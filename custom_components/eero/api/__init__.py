@@ -460,9 +460,15 @@ class EeroAPI:
 
                 update_data = network_data.get("updates") or {}
                 if config.get(network_id, EeroUpdateConfig()).get_release_notes:
-                    update_data["release_notes"] = self.get_release_notes(
-                        url=update_data.get("manifest_resource"),
-                    )
+                    try:
+                        update_data["release_notes"] = self.get_release_notes(
+                            url=update_data.get("manifest_resource"),
+                        )
+                    except EeroException as error:
+                        # Release notes only decorate the update entities.
+                        # Losing them must not take the rest of the network,
+                        # including the device trackers, unavailable.
+                        _LOGGER.warning("Could not fetch release notes: %s", error)
                 network_data["updates"] = update_data
 
                 timezone = network_data.get("timezone", {}).get("value") or "UTC"
