@@ -14,6 +14,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, CONF_SCAN_INTERVAL, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import (
     config_validation as cv,
     device_registry as dr,
@@ -26,7 +27,7 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
-from .api import EeroAPI, EeroException, EeroUpdateConfig
+from .api import EeroAPI, EeroException, EeroSessionExpired, EeroUpdateConfig
 from .api.const import SUPPORTED_APPS
 from .api.network import EeroNetwork
 from .api.resource import EeroResource
@@ -432,8 +433,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         try:
             async with timeout(conf_timeout):
                 return await hass.async_add_executor_job(api.update, conf_update)
+        except EeroSessionExpired as error:
+            raise ConfigEntryAuthFailed(
+                "Eero session expired, please sign in again"
+            ) from error
         except EeroException as error:
-            raise UpdateFailed("Error communicating with API") from error
+            raise UpdateFailed(f"Error communicating with Eero API: {error}") from error
 
     coordinator = DataUpdateCoordinator(
         hass=hass,
@@ -442,7 +447,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         update_method=async_update_data,
         update_interval=timedelta(seconds=conf_scan_interval),
     )
-    await coordinator.async_refresh()
+    await coordinator.async_config_entry_first_refresh()
 
     for network in coordinator.data.networks:
         if conf_miscellaneous_network := conf_miscellaneous.get(network.id):
@@ -587,6 +592,15 @@ class EeroEntity(CoordinatorEntity):
                 if resource.id == self.resource_id:
                     return resource
         return self.network
+
+    @property
+    def available(self) -> bool:
+        """Return True if the coordinator succeeded and this resource still exists."""
+        return bool(
+            self.coordinator.last_update_success
+            and self.network is not None
+            and self.resource is not None
+        )
 
     @property
     def unique_id(self) -> str:

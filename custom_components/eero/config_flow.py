@@ -1,5 +1,6 @@
 """Adds config flow for Eero integration."""
 
+from collections.abc import Mapping
 from datetime import timedelta
 import logging
 from typing import Any
@@ -90,6 +91,8 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.index = 0
         self.response = None
         self.user_input = {}
+        self.reauth_login = None
+        self.reauth_token = None
 
     @property
     def config_title(self) -> str:
@@ -538,6 +541,87 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ),
                 }
             ),
+            errors=errors,
+        )
+
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]):
+        """Handle re-authentication when the Eero session can no longer be refreshed."""
+        self.reauth_login = entry_data.get(CONF_LOGIN)
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(self, user_input=None):
+        """Request a new verification code for the configured account."""
+        errors = {}
+
+        if user_input:
+            self.api = EeroAPI()
+            try:
+                self.response = await self.hass.async_add_executor_job(
+                    self.api.login,
+                    user_input[CONF_LOGIN],
+                )
+            except EeroException as exception:
+                _LOGGER.error(
+                    "Status: %s, Error Message: %s", exception.code, exception.error
+                )
+                errors["base"] = "invalid_login"
+            else:
+                self.reauth_login = user_input[CONF_LOGIN]
+                self.reauth_token = self.response["user_token"]
+                return await self.async_step_reauth_verify()
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_LOGIN, default=self.reauth_login or vol.UNDEFINED
+                    ): TextSelector(
+                        TextSelectorConfig(
+                            type=TextSelectorType.TEXT,
+                        )
+                    ),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_reauth_verify(self, user_input=None):
+        """Verify the code and write the new session token to the config entry."""
+        errors = {}
+
+        if user_input:
+            try:
+                await self.hass.async_add_executor_job(
+                    self.api.login_verify,
+                    user_input[CONF_CODE],
+                )
+            except EeroException as exception:
+                _LOGGER.error(
+                    "Status: %s, Error Message: %s", exception.code, exception.error
+                )
+                errors["base"] = "invalid_code"
+            else:
+                return self.async_update_reload_and_abort(
+                    self._get_reauth_entry(),
+                    data_updates={
+                        CONF_LOGIN: self.reauth_login,
+                        CONF_USER_TOKEN: self.reauth_token,
+                    },
+                )
+
+        return self.async_show_form(
+            step_id="reauth_verify",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_CODE): TextSelector(
+                        TextSelectorConfig(
+                            type=TextSelectorType.NUMBER,
+                        )
+                    ),
+                }
+            ),
+            description_placeholders={"login": self.reauth_login},
             errors=errors,
         )
 

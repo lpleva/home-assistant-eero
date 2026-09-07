@@ -1,7 +1,8 @@
 {
     "config": {
         "abort": {
-            "already_configured": "The desired network is already configured"
+            "already_configured": "The desired network is already configured",
+            "reauth_successful": "Re-authentication was successful"
         },
         "error": {
             "invalid_code": "Invalid code",
@@ -17,6 +18,20 @@
                 "title": "Login to Eero account"
             },
             "verify": {
+                "data": {
+                    "code": "Verification code"
+                },
+                "description": "Enter the verification code that was sent to {login}.",
+                "title": "Verify Eero account"
+            },
+            "reauth_confirm": {
+                "data": {
+                    "login": "Login (email or SMS phone number)"
+                },
+                "description": "The Eero session has expired. Enter the email address or SMS phone number (including country code) associated with your account to sign in again.",
+                "title": "Reauthenticate Eero account"
+            },
+            "reauth_verify": {
                 "data": {
                     "code": "Verification code"
                 },
