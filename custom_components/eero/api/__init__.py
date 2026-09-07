@@ -71,6 +71,8 @@ class EeroRateLimited(EeroException):
 class EeroAPI:
     """EeroAPI."""
 
+    ALLOWED_RELEASE_NOTE_HOSTS = frozenset({"eero.com", "e2ro.com"})
+
     def __init__(
         self,
         save_location: str | None = None,
@@ -179,8 +181,20 @@ class EeroAPI:
             return None
         if url in self.release_notes_cache:
             return self.release_notes_cache[url]
+        parsed = urlparse(url)
+        host = parsed.hostname or ""
+        if parsed.scheme != "https" or not any(
+            host == domain or host.endswith(f".{domain}")
+            for domain in self.ALLOWED_RELEASE_NOTE_HOSTS
+        ):
+            _LOGGER.warning(
+                "Refusing to fetch release notes from unexpected host: %s", host
+            )
+            return None
+        # A bare request rather than self.session: the manifest URL comes from
+        # the API response, and the session carries the account's cookie jar.
         response = self.raise_on_transport_error(
-            lambda: self.session.get(url=url, timeout=self.request_timeout)
+            lambda: requests.get(url=url, timeout=self.request_timeout)
         )
         if not response.ok:
             raise EeroException(
@@ -225,7 +239,7 @@ class EeroAPI:
 
     def login_verify(self, code: str) -> dict[str, Any]:
         """Login verify."""
-        _LOGGER.debug("Verifying login with code: %s", code)
+        _LOGGER.debug("Verifying login code")
         return self.call(
             method=METHOD_POST,
             url="/2.2/login/verify",

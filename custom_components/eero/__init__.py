@@ -132,7 +132,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
     if config_entry.version < EeroConfigFlow.VERSION:
         data = dict(config_entry.data)
-        _LOGGER.debug("Initial data:\n%s", data)
+        _LOGGER.debug("Initial data keys: %s", sorted(data))
 
         options = dict(config_entry.options)
         _LOGGER.debug("Initial options:\n%s", options)
@@ -220,7 +220,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             data[CONF_MISCELLANEOUS] = miscellaneous
             options[CONF_MISCELLANEOUS] = miscellaneous
 
-        _LOGGER.debug("Migrated data:\n%s", data)
+        _LOGGER.debug("Migrated data keys: %s", sorted(data))
         _LOGGER.debug("Migrated options:\n%s", options)
 
         hass.config_entries.async_update_entry(
