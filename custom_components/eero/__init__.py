@@ -69,6 +69,7 @@ from .const import (
     CONF_WIRELESS_CLIENTS_FILTER,
     DATA_API,
     DATA_COORDINATOR,
+    DATA_OPTIONS,
     DATA_UPDATE_LISTENER,
     DEFAULT_CONSIDER_HOME,
     DEFAULT_PREFIX_NETWORK_NAME,
@@ -490,6 +491,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         CONF_RESOURCES: conf_resources,
         DATA_API: api,
         DATA_COORDINATOR: coordinator,
+        DATA_OPTIONS: dict(config_entry.options),
         DATA_UPDATE_LISTENER: config_entry.add_update_listener(async_update_listener),
     }
 
@@ -574,7 +576,28 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
 
 
 async def async_update_listener(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
-    """Handle options update."""
+    """Reload when the options change, or when a new session arrives from a flow.
+
+    Home Assistant fires update listeners on any change to the entry, data
+    included, and a refreshed session token is written back to the entry data
+    on every rotation. Rebuilding every entity in the house for that would
+    reset the device trackers' consider_home clocks, close a session an
+    executor thread is still using, and start a second poll on top of the one
+    in flight. The token this integration persisted itself is the one the
+    running API object already holds, so it is the one change that needs no
+    reload; a token that arrived from the reauth flow does not match, and does.
+    """
+    if (entry_data := hass.data[DOMAIN].get(config_entry.entry_id)) is None:
+        return
+    options = dict(config_entry.options)
+    if all(
+        [
+            options == entry_data[DATA_OPTIONS],
+            config_entry.data.get(CONF_USER_TOKEN) == entry_data[DATA_API].user_token,
+        ]
+    ):
+        return
+    entry_data[DATA_OPTIONS] = options
     await hass.config_entries.async_reload(config_entry.entry_id)
 
 
