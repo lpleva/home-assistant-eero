@@ -80,6 +80,7 @@ class EeroAPI:
     ) -> None:
         """Initialize."""
         self.data = EeroAccount(self, {})
+        self.release_notes_cache: dict[str, dict[str, Any]] = {}
         self.save_location = save_location
         self.session = requests.Session()
         self.user_token = user_token
@@ -167,22 +168,30 @@ class EeroAPI:
         end = f"{end.astimezone(datetime.UTC).replace(tzinfo=None).isoformat()}Z"
         return (start, end, cadence)
 
-    def get_release_notes(self, url: str) -> dict[str, Any] | None:
-        """Get release notes."""
-        if url:
-            response = self.raise_on_transport_error(
-                lambda: self.session.get(url=url, timeout=self.request_timeout)
+    def get_release_notes(self, url: str | None) -> dict[str, Any] | None:
+        """Get release notes.
+
+        Cached by manifest URL: the manifest changes only when the firmware
+        does, and refetching it every poll is a large share of this
+        integration's request volume.
+        """
+        if not url:
+            return None
+        if url in self.release_notes_cache:
+            return self.release_notes_cache[url]
+        response = self.raise_on_transport_error(
+            lambda: self.session.get(url=url, timeout=self.request_timeout)
+        )
+        if not response.ok:
+            raise EeroException(
+                code=response.status_code,
+                error=response.reason,
+                message="Unable to get release notes",
             )
-            if not response.ok:
-                raise EeroException(
-                    code=response.status_code,
-                    error=response.reason,
-                    message="Unable to get release notes",
-                )
-            text = self.decode_json(response)
-            self.save_response(response=text, name="release_notes")
-            return text
-        return None
+        text = self.decode_json(response)
+        self.save_response(response=text, name="release_notes")
+        self.release_notes_cache[url] = text
+        return text
 
     def login(self, login: str | int) -> dict[str, Any]:
         """Login."""

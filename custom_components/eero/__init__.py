@@ -28,7 +28,13 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
-from .api import EeroAPI, EeroException, EeroSessionExpired, EeroUpdateConfig
+from .api import (
+    EeroAPI,
+    EeroException,
+    EeroRateLimited,
+    EeroSessionExpired,
+    EeroUpdateConfig,
+)
 from .api.const import CONNECT_TIMEOUT, SUPPORTED_APPS
 from .api.network import EeroNetwork
 from .api.resource import EeroResource
@@ -445,6 +451,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         except EeroSessionExpired as error:
             raise ConfigEntryAuthFailed(
                 "Eero session expired, please sign in again"
+            ) from error
+        except EeroRateLimited as error:
+            raise UpdateFailed(
+                f"Rate limited by the Eero API, retry after {error.retry_after or 'unknown'}s"
             ) from error
         except EeroException as error:
             raise UpdateFailed(f"Error communicating with Eero API: {error}") from error
