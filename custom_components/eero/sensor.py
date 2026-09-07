@@ -83,7 +83,7 @@ class EeroSensorEntityDescription(EeroEntityDescription, SensorEntityDescription
     """Class to describe an Eero sensor entity."""
 
     native_value: Callable = lambda resource, key: getattr(resource, key)
-    entity_category: str[EntityCategory] | None = EntityCategory.DIAGNOSTIC
+    entity_category: EntityCategory | None = EntityCategory.DIAGNOSTIC
     activity_type: bool = False
     wireless_only: bool = False
 

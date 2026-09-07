@@ -36,8 +36,8 @@ from .util import client_allowed
 class EeroDeviceTrackerEntityDescription(EeroEntityDescription):
     """Class to describe an Eero device tracker entity."""
 
-    entity_category: str[EntityCategory] | None = EntityCategory.DIAGNOSTIC
-    source_type: str[SourceType] = SourceType.ROUTER
+    entity_category: EntityCategory | None = EntityCategory.DIAGNOSTIC
+    source_type: SourceType = SourceType.ROUTER
 
 
 DEVICE_TRACKER_DESCRIPTIONS: list[EeroDeviceTrackerEntityDescription] = [

@@ -36,7 +36,7 @@ class EeroBinarySensorEntityDescription(
 ):
     """Class to describe an Eero binary sensor entity."""
 
-    entity_category: str[EntityCategory] | None = EntityCategory.DIAGNOSTIC
+    entity_category: EntityCategory | None = EntityCategory.DIAGNOSTIC
     extra_attrs_wireless_only: dict[str, Callable] | None = None
 
 

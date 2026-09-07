@@ -33,8 +33,8 @@ from .util import client_allowed, resource_supports
 class EeroSwitchEntityDescription(EeroEntityDescription, SwitchEntityDescription):
     """Class to describe an Eero switch entity."""
 
-    device_class: str[SwitchDeviceClass] | None = SwitchDeviceClass.SWITCH
-    entity_category: str[EntityCategory] | None = EntityCategory.CONFIG
+    device_class: SwitchDeviceClass | None = SwitchDeviceClass.SWITCH
+    entity_category: EntityCategory | None = EntityCategory.CONFIG
 
 
 SWITCH_DESCRIPTIONS: list[EeroSwitchEntityDescription] = [

@@ -200,19 +200,6 @@
                 }
             }
         },
-        "camera": {
-            "all": {
-                "state": {
-                    "disabled": "Disabled",
-                    "enabled": "Enabled"
-                },
-                "state_attributes": {
-                    "ssid": {
-                        "name": "SSID"
-                    }
-                }
-            }
-        },
         "device_tracker": {
             "all": {
                 "state_attributes": {

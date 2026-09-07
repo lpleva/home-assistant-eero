@@ -27,7 +27,7 @@ from .util import resource_supports
 class EeroNumberEntityDescription(EeroEntityDescription, NumberEntityDescription):
     """Class to describe an Eero number entity."""
 
-    entity_category: str[EntityCategory] | None = EntityCategory.CONFIG
+    entity_category: EntityCategory | None = EntityCategory.CONFIG
 
 
 NUMBER_DESCRIPTIONS: list[EeroNumberEntityDescription] = [
@@ -74,7 +74,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class EeroNumberEntity(NumberEntity, EeroEntity):
+class EeroNumberEntity(EeroEntity, NumberEntity):
     """Representation of an Eero number entity."""
 
     entity_description: EeroNumberEntityDescription

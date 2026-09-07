@@ -26,7 +26,7 @@ from .util import resource_supports
 class EeroSelectEntityDescription(EeroEntityDescription, SelectEntityDescription):
     """Class to describe an Eero select entity."""
 
-    entity_category: str[EntityCategory] | None = EntityCategory.CONFIG
+    entity_category: EntityCategory | None = EntityCategory.CONFIG
 
 
 SELECT_DESCRIPTIONS: list[EeroSelectEntityDescription] = [
@@ -92,7 +92,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class EeroSelectEntity(SelectEntity, EeroEntity):
+class EeroSelectEntity(EeroEntity, SelectEntity):
     """Representation of an Eero select entity."""
 
     entity_description: EeroSelectEntityDescription

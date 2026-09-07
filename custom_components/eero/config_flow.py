@@ -81,7 +81,6 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 3
     MINOR_VERSION = 0
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
     def __init__(self) -> None:
         """Initialize."""
@@ -118,14 +117,14 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self.user_input[CONF_USER_TOKEN] = self.response["user_token"]
                 return await self.async_step_verify()
 
-        user_input = {}
-        conf_login = user_input[CONF_LOGIN] if user_input else None
-
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_LOGIN, default=conf_login): TextSelector(
+                    vol.Required(
+                        CONF_LOGIN,
+                        default=(user_input or {}).get(CONF_LOGIN, vol.UNDEFINED),
+                    ): TextSelector(
                         TextSelectorConfig(
                             type=TextSelectorType.TEXT,
                         )
@@ -157,14 +156,14 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self.response = await self.hass.async_add_executor_job(self.api.update)
                 return await self.async_step_networks()
 
-        user_input = {}
-        conf_code = user_input[CONF_CODE] if user_input else None
-
         return self.async_show_form(
             step_id="verify",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_CODE, default=conf_code): TextSelector(
+                    vol.Required(
+                        CONF_CODE,
+                        default=(user_input or {}).get(CONF_CODE, vol.UNDEFINED),
+                    ): TextSelector(
                         TextSelectorConfig(
                             type=TextSelectorType.NUMBER,
                         )

@@ -32,8 +32,8 @@ from .util import resource_supports
 class EeroLightEntityDescription(EeroEntityDescription, LightEntityDescription):
     """Class to describe an Eero light entity."""
 
-    entity_category: str[EntityCategory] | None = EntityCategory.CONFIG
-    color_mode: str[ColorMode] = ColorMode.BRIGHTNESS
+    entity_category: EntityCategory | None = EntityCategory.CONFIG
+    color_mode: ColorMode = ColorMode.BRIGHTNESS
     supported_color_modes: set[ColorMode] = field(
         default_factory=lambda: {ColorMode.BRIGHTNESS}
     )

@@ -27,7 +27,7 @@ from .util import resource_supports
 class EeroTimeEntityDescription(EeroEntityDescription, TimeEntityDescription):
     """Class to describe an Eero time entity."""
 
-    entity_category: str[EntityCategory] | None = EntityCategory.CONFIG
+    entity_category: EntityCategory | None = EntityCategory.CONFIG
 
 
 TIME_DESCRIPTIONS: list[EeroTimeEntityDescription] = [
@@ -75,7 +75,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class EeroTimeEntity(TimeEntity, EeroEntity):
+class EeroTimeEntity(EeroEntity, TimeEntity):
     """Representation of an Eero time entity."""
 
     entity_description: EeroTimeEntityDescription

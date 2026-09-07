@@ -32,7 +32,7 @@ from .const import (
 class EeroUpdateEntityDescription(EeroEntityDescription, UpdateEntityDescription):
     """Class to describe an Eero update entity."""
 
-    entity_category: str[EntityCategory] | None = EntityCategory.CONFIG
+    entity_category: EntityCategory | None = EntityCategory.CONFIG
 
 
 UPDATE_DESCRIPTIONS: list[EeroUpdateEntityDescription] = [
@@ -79,7 +79,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class EeroUpdateEntity(UpdateEntity, EeroEntity):
+class EeroUpdateEntity(EeroEntity, UpdateEntity):
     """Representation of an Eero update entity."""
 
     @property
