@@ -1,0 +1,23 @@
+[
+    {
+        "url": "/2.2/networks/1234567/devices/aa:bb:cc:dd:ee:ff",
+        "mac": "aa:bb:cc:dd:ee:ff",
+        "nickname": "Chloe iPad",
+        "hostname": "chloe-ipad",
+        "ip": "192.168.4.21",
+        "connected": true,
+        "wireless": true,
+        "connectivity": {
+            "signal": "-42 dBm"
+        }
+    },
+    {
+        "url": "/2.2/networks/1234567/devices/11:22:33:44:55:66",
+        "mac": "11:22:33:44:55:66",
+        "nickname": "Office Printer",
+        "hostname": "printer",
+        "ip": "192.168.4.30",
+        "connected": true,
+        "wireless": false
+    }
+]

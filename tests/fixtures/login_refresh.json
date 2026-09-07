@@ -1,0 +1,8 @@
+{
+    "meta": {
+        "code": 200
+    },
+    "data": {
+        "user_token": "NEW-TOKEN"
+    }
+}

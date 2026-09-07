@@ -1,0 +1,17 @@
+{
+    "name": "Test Account",
+    "log_id": "ABC123",
+    "email": {
+        "value": "someone@example.com"
+    },
+    "networks": {
+        "count": 1,
+        "data": [
+            {
+                "url": "/2.2/networks/1234567",
+                "name": "TestNetwork",
+                "created": "2026-01-01T00:00:00.000Z"
+            }
+        ]
+    }
+}

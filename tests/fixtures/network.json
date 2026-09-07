@@ -1,0 +1,34 @@
+{
+    "url": "/2.2/networks/1234567",
+    "name": "TestNetwork",
+    "status": "connected",
+    "password": "the-wifi-password",
+    "timezone": {
+        "value": "America/Chicago"
+    },
+    "geo_ip": {
+        "city": "St. Charles",
+        "regionName": "Illinois"
+    },
+    "capabilities": {
+        "premium": {
+            "capable": true
+        },
+        "backup_access_point": {
+            "capable": true,
+            "requirements": {
+                "eero_plus": true
+            }
+        }
+    },
+    "premium_status": "active",
+    "resources": {
+        "devices": "/2.2/networks/1234567/devices",
+        "profiles": "/2.2/networks/1234567/profiles",
+        "thread": "/2.2/networks/1234567/thread"
+    },
+    "updates": {
+        "manifest_resource": "https://api-user.e2ro.com/2.2/updates/manifest-7.1.0",
+        "preferred_update_hour": 2
+    }
+}

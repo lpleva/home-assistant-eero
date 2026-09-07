@@ -11,7 +11,6 @@ from typing import Any
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
-from dateutil import relativedelta
 import requests
 
 from .account import EeroAccount
@@ -137,6 +136,11 @@ class EeroAPI:
 
     def define_period(self, period: str, timezone: str) -> tuple:
         """Define period."""
+        # Imported here so this package can be imported, and unit tested,
+        # without python-dateutil, which arrives with Home Assistant rather
+        # than through this integration's requirements.
+        from dateutil import relativedelta  # noqa: PLC0415
+
         start, end, cadence = None, None, None
         now = datetime.datetime.now(tz=ZoneInfo(timezone))
         if period == PERIOD_DAY:
@@ -495,7 +499,7 @@ class EeroAPI:
                             )
                 network_data["activity"] = activity_data
                 networks.append(network_data)
-        account["networks"]["data"] = networks
+        account.setdefault("networks", {})["data"] = networks
         self.save_response(response=account, name="update_data")
         self.data = EeroAccount(self, account)
         return self.data

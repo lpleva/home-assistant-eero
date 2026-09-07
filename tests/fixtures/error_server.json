@@ -1,0 +1,12 @@
+{
+    "meta": {
+        "code": 500,
+        "error": "error.internal"
+    },
+    "data": {
+        "password": "the-wifi-password",
+        "thread": {
+            "master_key": "0123456789abcdef0123456789abcdef"
+        }
+    }
+}

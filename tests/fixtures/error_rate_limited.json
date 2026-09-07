@@ -1,0 +1,6 @@
+{
+    "meta": {
+        "code": 429,
+        "error": "error.rate.limited"
+    }
+}

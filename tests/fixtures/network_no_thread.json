@@ -1,0 +1,8 @@
+{
+    "url": "/2.2/networks/1234567",
+    "name": "TestNetwork",
+    "status": "connected",
+    "resources": {
+        "devices": "/2.2/networks/1234567/devices"
+    }
+}

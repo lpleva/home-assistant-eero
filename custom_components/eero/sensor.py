@@ -35,6 +35,7 @@ from .api.const import (
     STATE_NETWORK,
     STATE_PROFILE,
 )
+from .api.util import sum_data_usage
 from .const import (
     CONF_ACTIVITY,
     CONF_ACTIVITY_CLIENTS,
@@ -68,14 +69,6 @@ SPEED_UNIT_MAP = {
     "Mbps": UnitOfDataRate.MEGABITS_PER_SECOND,
     "Gbps": UnitOfDataRate.GIGABITS_PER_SECOND,
 }
-
-
-def sum_data_usage(resource, key: str) -> int | None:
-    """Return total bytes for a (download, upload) pair, or None if neither is reported."""
-    down, up = getattr(resource, key)
-    if down is None and up is None:
-        return None
-    return (down or 0) + (up or 0)
 
 
 @dataclass

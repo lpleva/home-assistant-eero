@@ -1,0 +1,7 @@
+{
+    "enabled": true,
+    "name": "eero-thread",
+    "channel": 15,
+    "master_key": "0123456789abcdef0123456789abcdef",
+    "active_operational_dataset": "0e080000000000010000"
+}
