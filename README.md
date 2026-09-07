@@ -1,6 +1,6 @@
 ## About this fork
 
-This is Lukas Pleva's audited fork of [schmittx/home-assistant-eero](https://github.com/schmittx/home-assistant-eero), taken at upstream version 1.8.1; this fork is version 1.9.1. It exists because every integration that holds a login or can act on the house gets a line-by-line audit before it runs in his Home Assistant, and the fixes live here rather than upstream.
+This is an audited fork of [schmittx/home-assistant-eero](https://github.com/schmittx/home-assistant-eero), taken at upstream version 1.8.1; this fork is version 1.9.1. It exists because, in the Home Assistant install it serves, every integration that holds a login or can act on the home gets a line-by-line audit before it runs, and the fixes live here rather than upstream.
 
 **Why it was forked.** Upstream's device tracker broke on Home Assistant 2026.7 and the project went quiet with the fix sitting in an unmerged pull request, so the only way to run working code was to carry it ourselves.
 
