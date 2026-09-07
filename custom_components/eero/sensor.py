@@ -50,7 +50,7 @@ from .const import (
     DATA_COORDINATOR,
     DOMAIN as EERO_DOMAIN,
 )
-from .util import client_allowed
+from .util import client_allowed, resource_supports
 
 DEVICE_CATEGORIES = [
     DEVICE_CATEGORY_COMPUTERS_PERSONAL,
@@ -319,7 +319,7 @@ async def async_setup_entry(
                     ]
                 ):
                     continue
-                if hasattr(network, key):
+                if resource_supports(network, key):
                     entities.append(
                         EeroSensorEntity(
                             coordinator,
@@ -336,7 +336,7 @@ async def async_setup_entry(
                     in entry[CONF_RESOURCES][network.id][CONF_BACKUP_NETWORKS]
                 ):
                     for key, description in SUPPORTED_KEYS.items():
-                        if hasattr(backup_network, key):
+                        if resource_supports(backup_network, key):
                             entities.append(
                                 EeroSensorEntity(
                                     coordinator,
@@ -359,7 +359,7 @@ async def async_setup_entry(
                             ]
                         ):
                             continue
-                        if hasattr(eero, key):
+                        if resource_supports(eero, key):
                             entities.append(
                                 EeroSensorEntity(
                                     coordinator,
@@ -382,7 +382,7 @@ async def async_setup_entry(
                             ]
                         ):
                             continue
-                        if hasattr(profile, key):
+                        if resource_supports(profile, key):
                             entities.append(
                                 EeroSensorEntity(
                                     coordinator,
@@ -406,7 +406,7 @@ async def async_setup_entry(
                             ]
                         ):
                             continue
-                        if hasattr(client, key):
+                        if resource_supports(client, key):
                             entities.append(
                                 EeroSensorEntity(
                                     coordinator,
@@ -466,7 +466,7 @@ class EeroSensorEntity(EeroEntity, SensorEntity):
                 attrs["clients"] = sorted(self.resource.connected_clients_names)
             for category in DEVICE_CATEGORIES:
                 attr = f"{self.entity_description.key}_{category}"
-                if hasattr(self.resource, attr):
+                if resource_supports(self.resource, attr):
                     attrs[category] = getattr(self.resource, attr)
         if self.entity_description.key == "status" and self.resource.is_backup_network:
             attrs["checked"] = self.resource.checked

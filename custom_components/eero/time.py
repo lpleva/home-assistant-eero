@@ -20,6 +20,7 @@ from .const import (
     DATA_COORDINATOR,
     DOMAIN as EERO_DOMAIN,
 )
+from .util import resource_supports
 
 
 @dataclass
@@ -60,7 +61,7 @@ async def async_setup_entry(
                     for key, description in SUPPORTED_KEYS.items():
                         if description.premium_type and not network.premium_enabled:
                             continue
-                        if hasattr(eero, key):
+                        if resource_supports(eero, key):
                             entities.append(
                                 EeroTimeEntity(
                                     coordinator,

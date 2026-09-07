@@ -26,7 +26,7 @@ from .const import (
     DATA_COORDINATOR,
     DOMAIN as EERO_DOMAIN,
 )
-from .util import client_allowed
+from .util import client_allowed, resource_supports
 
 
 @dataclass
@@ -198,7 +198,7 @@ async def async_setup_entry(
             for key, description in SUPPORTED_KEYS.items():
                 if description.premium_type and not network.premium_enabled:
                     continue
-                if hasattr(network, key):
+                if resource_supports(network, key):
                     entities.append(
                         EeroSwitchEntity(
                             coordinator,
@@ -215,7 +215,7 @@ async def async_setup_entry(
                     in entry[CONF_RESOURCES][network.id][CONF_BACKUP_NETWORKS]
                 ):
                     for key, description in SUPPORTED_KEYS.items():
-                        if hasattr(backup_network, key):
+                        if resource_supports(backup_network, key):
                             entities.append(
                                 EeroSwitchEntity(
                                     coordinator,
@@ -231,7 +231,7 @@ async def async_setup_entry(
                     for key, description in SUPPORTED_KEYS.items():
                         if description.premium_type and not network.premium_enabled:
                             continue
-                        if hasattr(profile, key):
+                        if resource_supports(profile, key):
                             entities.append(
                                 EeroSwitchEntity(
                                     coordinator,
@@ -247,7 +247,7 @@ async def async_setup_entry(
                     for key, description in SUPPORTED_KEYS.items():
                         if description.premium_type and not network.premium_enabled:
                             continue
-                        if hasattr(client, key):
+                        if resource_supports(client, key):
                             entities.append(
                                 EeroSwitchEntity(
                                     coordinator,
