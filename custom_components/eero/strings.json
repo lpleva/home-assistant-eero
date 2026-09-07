@@ -80,7 +80,7 @@
             },
             "advanced": {
                 "data": {
-                    "save_responses": "Save server responses to custom_components/eero/api/responses",
+                    "save_responses": "Save redacted server responses to .storage/eero_responses",
                     "scan_interval": "Polling interval",
                     "timeout": "Polling timeout"
                 },
@@ -135,7 +135,7 @@
             },
             "advanced": {
                 "data": {
-                    "save_responses": "Save server responses to custom_components/eero/api/responses",
+                    "save_responses": "Save redacted server responses to .storage/eero_responses",
                     "scan_interval": "Polling interval",
                     "timeout": "Polling timeout"
                 },

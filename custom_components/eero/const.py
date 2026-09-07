@@ -113,7 +113,7 @@ STEP_TIMEOUT: int = 5
 
 DEFAULT_CONSIDER_HOME: int = 0
 DEFAULT_PREFIX_NETWORK_NAME: bool = True
-DEFAULT_SAVE_LOCATION: str = f"/config/custom_components/{DOMAIN}/api/responses"
+DEFAULT_SAVE_DIRECTORY: str = f"{DOMAIN}_responses"
 DEFAULT_SAVE_RESPONSES: bool = False
 DEFAULT_SCAN_INTERVAL: int = 120
 DEFAULT_SHOW_EERO_LOGO: bool = False

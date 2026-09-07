@@ -132,6 +132,17 @@ PERIOD_DAY = "day"
 PERIOD_MONTH = "month"
 PERIOD_WEEK = "week"
 
+REDACT_KEYS = frozenset(
+    {
+        "active_operational_dataset",
+        "commissioning_credential",
+        "master_key",
+        "password",
+        "psk",
+        "user_token",
+    }
+)
+
 RESOURCE_MAP = {"clients": "devices"}
 
 STATE_ACTIVE = "active"

@@ -29,6 +29,7 @@ from .const import (
     PERIOD_DAY,
     PERIOD_MONTH,
     PERIOD_WEEK,
+    REDACT_KEYS,
     RESOURCE_MAP,
     URL_ACCOUNT,
 )
@@ -307,23 +308,40 @@ class EeroAPI:
                 message="Request timed out",
             ) from exception
 
+    def redact(self, obj: Any) -> Any:
+        """Return a copy of obj with every secret value replaced."""
+        if isinstance(obj, dict):
+            return {
+                key: ("**REDACTED**" if key in REDACT_KEYS else self.redact(value))
+                for key, value in obj.items()
+            }
+        if isinstance(obj, list):
+            return [self.redact(item) for item in obj]
+        return obj
+
     def save_response(self, response: dict[str, Any] | None, name="response") -> None:
-        """Save response."""
-        if self.save_location and response:
-            if not Path(self.save_location).is_dir():
-                _LOGGER.debug("Creating directory: %s", self.save_location)
-                Path(self.save_location).mkdir()
-            name = name.replace("/", "_").replace(".", "_")
-            file_path_name = f"{self.save_location}/{name}.json"
-            _LOGGER.debug("Saving response: %s", file_path_name)
-            with Path(file_path_name).open(mode="w", encoding="utf-8") as file:
-                json.dump(
-                    obj=response,
-                    fp=file,
-                    indent=4,
-                    default=lambda o: "not-serializable",
-                    sort_keys=True,
-                )
+        """Save a redacted response for debugging.
+
+        Auth exchanges are never written to disk: their bodies are the session
+        token itself.
+        """
+        if not self.save_location or not response:
+            return
+        if name.startswith("/2.2/login"):
+            _LOGGER.debug("Not saving response for auth endpoint: %s", name)
+            return
+        Path(self.save_location).mkdir(parents=True, exist_ok=True)
+        name = name.replace("/", "_").replace(".", "_")
+        file_path_name = f"{self.save_location}/{name}.json"
+        _LOGGER.debug("Saving response: %s", file_path_name)
+        with Path(file_path_name).open(mode="w", encoding="utf-8") as file:
+            json.dump(
+                obj=self.redact(response),
+                fp=file,
+                indent=4,
+                default=lambda o: "not-serializable",
+                sort_keys=True,
+            )
 
     def update(
         self,

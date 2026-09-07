@@ -120,7 +120,6 @@ SWITCH_DESCRIPTIONS: list[EeroSwitchEntityDescription] = [
         name="Guest Network",
         extra_attrs={
             "guest_network_name": lambda resource: resource.guest_network_name,
-            "guest_network_password": lambda resource: resource.guest_network_password,
             "connected_guest_clients": lambda resource: resource.connected_guest_clients_count,
         },
     ),
@@ -158,13 +157,10 @@ SWITCH_DESCRIPTIONS: list[EeroSwitchEntityDescription] = [
         key="thread_enabled",
         name="Thread Enabled",
         extra_attrs={
-            "thread_network_key": lambda resource: resource.thread_master_key,
             "thread_network_name": lambda resource: resource.thread_name,
             "channel": lambda resource: resource.thread_channel,
             "pan_id": lambda resource: resource.thread_pan_id,
             "extended_pan_id": lambda resource: resource.thread_xpan_id,
-            "commissioning_credential": lambda resource: resource.thread_commissioning_credential,
-            "active_operational_dataset": lambda resource: resource.thread_active_operational_dataset,
         },
     ),
     EeroSwitchEntityDescription(

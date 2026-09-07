@@ -66,7 +66,7 @@ from .const import (
     DATA_UPDATE_LISTENER,
     DEFAULT_CONSIDER_HOME,
     DEFAULT_PREFIX_NETWORK_NAME,
-    DEFAULT_SAVE_LOCATION,
+    DEFAULT_SAVE_DIRECTORY,
     DEFAULT_SAVE_RESPONSES,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_SHOW_EERO_LOGO,
@@ -388,7 +388,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
                         entity_registry.async_remove(entity_entry.entity_id)
 
     api = EeroAPI(
-        save_location=DEFAULT_SAVE_LOCATION if conf_save_responses else None,
+        save_location=hass.config.path(".storage", DEFAULT_SAVE_DIRECTORY)
+        if conf_save_responses
+        else None,
         show_eero_logo={
             network_id: miscellaneous[CONF_SHOW_EERO_LOGO]
             for network_id, miscellaneous in conf_miscellaneous.items()
