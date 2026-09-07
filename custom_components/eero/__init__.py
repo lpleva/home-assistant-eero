@@ -677,7 +677,10 @@ class EeroEntity(CoordinatorEntity):
     def device_info(self) -> dr.DeviceInfo | None:
         """Return device specific attributes.
 
-        Implemented by platform classes.
+        None rather than the network's device: attaching to the wrong device
+        is permanent, because Home Assistant reads this once at registration.
+        Entities are only built from live resources, so this is unreachable in
+        practice.
         """
         if self.resource is None:
             return None
