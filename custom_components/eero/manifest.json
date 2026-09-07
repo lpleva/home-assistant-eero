@@ -11,5 +11,5 @@
   "issue_tracker": "https://github.com/schmittx/home-assistant-eero/issues",
   "loggers": ["requests"],
   "requirements": [],
-  "version": "1.9.0"
+  "version": "1.9.1"
 }

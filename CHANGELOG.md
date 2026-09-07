@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.9.1
+
+Two fixes from the first run on Home Assistant 2026.9.1.
+
+- The release-notes host allowlist added in 1.9.0 (**M5**) was too strict: it
+  carried `eero.com` and `e2ro.com` only, while the firmware manifest URL in
+  the API response points at `eeroassets.com`, Eero's own asset host. Every
+  poll logged "Refusing to fetch release notes from unexpected host:
+  eeroassets.com" and no release notes were shown. `eeroassets.com` and its
+  subdomains are now allowed; the fetch is still https-only and still uses a
+  bare request rather than the authenticated session.
+- Child devices are linked to their network with `via_device_id` instead of
+  `via_device`. Home Assistant deprecated the identifier-tuple `via_device`
+  (it is removed in 2027.8) and warned once per platform on every start. The
+  network device is now looked up in the device registry and its ID passed
+  instead. Eeros, profiles, clients and backup networks sit under their
+  network exactly as before.
+
 ## 1.9.0
 
 Fixes for the findings in the code audit of this fork (4 critical, 9 high,
