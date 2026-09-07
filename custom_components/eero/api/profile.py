@@ -496,9 +496,9 @@ class EeroProfile(EeroResource):
         )
 
     @property
-    def clients(self) -> list[EeroClient | None]:
-        """Clients."""
+    def clients(self) -> list[EeroClient]:
+        """Clients assigned to this profile."""
         return [
-            EeroClient(self.api, self, client)
+            EeroClient(self.api, self.network, client)
             for client in self.data.get("devices", [])
         ]

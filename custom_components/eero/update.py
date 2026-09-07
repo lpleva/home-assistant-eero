@@ -141,12 +141,10 @@ class EeroUpdateEntity(UpdateEntity, EeroEntity):
         return self.resource.target_firmware.title
 
     def install(self, version: str | None, backup: bool, **kwargs: Any) -> None:
-        """Install an update.
+        """Install the pending firmware.
 
-        Version can be specified to install a specific version. When `None`, the
-        latest version needs to be installed.
-
-        The backup parameter indicates a backup should be taken before
-        installing the update.
+        Eero updates every eero on the network at once, so version and backup
+        are ignored; supported_features never offers SPECIFIC_VERSION or
+        BACKUP.
         """
-        self.network.update()
+        self.network.install_firmware_update()

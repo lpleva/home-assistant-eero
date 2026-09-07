@@ -799,8 +799,8 @@ class EeroNetwork(EeroResource):
         """Thread XPAN ID."""
         return self.data.get("thread", {}).get("xpan_id")
 
-    def update(self) -> None:
-        """Update."""
+    def install_firmware_update(self) -> None:
+        """Trigger a firmware update for every eero on this network."""
         self.api.call(method=METHOD_POST, url=self.url_updates)
 
     @property

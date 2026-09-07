@@ -565,8 +565,9 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         config_entry, PLATFORMS
     )
     if unload_ok:
-        hass.data[DOMAIN][config_entry.entry_id][DATA_UPDATE_LISTENER]()
-        hass.data[DOMAIN].pop(config_entry.entry_id)
+        entry_data = hass.data[DOMAIN].pop(config_entry.entry_id)
+        entry_data[DATA_UPDATE_LISTENER]()
+        await hass.async_add_executor_job(entry_data[DATA_API].session.close)
 
     return unload_ok
 
