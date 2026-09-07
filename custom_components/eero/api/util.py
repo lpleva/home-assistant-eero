@@ -34,7 +34,7 @@ def generate_qr_code(ssid: str, password: str | None) -> bytes | None:
 
 def backup_access_point_ok(capable: bool | None, requirements: dict | None) -> bool:
     """Backup access point OK."""
-    return capable and all(bool(value) for value in requirements.values())
+    return bool(capable) and all(bool(value) for value in (requirements or {}).values())
 
 
 def premium_ok(capable: bool | None, status: str | None) -> bool:

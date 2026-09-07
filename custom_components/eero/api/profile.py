@@ -15,29 +15,26 @@ class EeroProfile(EeroResource):
     @property
     def ad_block(self) -> bool:
         """Ad block."""
-        return all(
-            [
-                self.network.ad_block_enabled,
-                self.url in self.network.ad_block_profiles,
-            ]
+        return bool(
+            self.network.ad_block_enabled
+            and self.url in (self.network.ad_block_profiles or [])
         )
 
     @ad_block.setter
     def ad_block(self, value: bool) -> None:
         if not isinstance(value, bool):
             return
-        profiles = self.network.ad_block_profiles
+        profiles = list(self.network.ad_block_profiles or [])
         if value:
-            profiles.append(self.url)
-        else:
+            if self.url not in profiles:
+                profiles.append(self.url)
+        elif self.url in profiles:
             profiles.remove(self.url)
-            if profiles:
-                value = True
         self.api.call(
             method=METHOD_POST,
             url=f"{self.network.url_dns_policies}/adblock",
             json={
-                "enable": value,
+                "enable": bool(value or profiles),
                 "profiles": profiles,
             },
         )

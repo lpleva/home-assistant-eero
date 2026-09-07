@@ -592,20 +592,25 @@ class EeroEntity(CoordinatorEntity):
 
     @property
     def network(self) -> EeroNetwork | None:
-        """Return the network for this entity."""
-        for network in self.coordinator.data.networks:
+        """Return the network for this entity, or None if it is no longer reported."""
+        if (data := self.coordinator.data) is None:
+            return None
+        for network in data.networks:
             if network.id == self.network_id:
                 return network
         return None
 
     @property
     def resource(self) -> EeroResource | None:
-        """Return the resource for this entity."""
-        if self.resource_id:
-            for resource in self.network.resources:
-                if resource.id == self.resource_id:
-                    return resource
-        return self.network
+        """Return the resource for this entity, or None if it is no longer reported."""
+        if (network := self.network) is None:
+            return None
+        if self.resource_id is None:
+            return network
+        for resource in network.resources:
+            if resource.id == self.resource_id:
+                return resource
+        return None
 
     @property
     def available(self) -> bool:
@@ -618,17 +623,23 @@ class EeroEntity(CoordinatorEntity):
 
     @property
     def unique_id(self) -> str:
-        """Return a unique ID."""
-        if self.resource.is_network:
-            return f"{self.network.id}-{self.entity_description.key}"
-        return f"{self.network.id}-{self.resource.id}-{self.entity_description.key}"
+        """Return a unique ID.
+
+        Built from the configured IDs rather than from live data, so a resource
+        that is missing at registration time cannot inherit the network's ID.
+        """
+        if self.resource_id is None:
+            return f"{self.network_id}-{self.entity_description.key}"
+        return f"{self.network_id}-{self.resource_id}-{self.entity_description.key}"
 
     @property
-    def device_info(self) -> dr.DeviceInfo:
+    def device_info(self) -> dr.DeviceInfo | None:
         """Return device specific attributes.
 
         Implemented by platform classes.
         """
+        if self.resource is None:
+            return None
         name = self.resource.name
         if self.resource.is_network:
             model = MODEL_NETWORK

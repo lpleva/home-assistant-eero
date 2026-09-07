@@ -367,10 +367,13 @@ class EeroAPI:
         """
         if config is None:
             config = {}
-        account = self.call(method=METHOD_GET, url=URL_ACCOUNT)
+        account = self.call(method=METHOD_GET, url=URL_ACCOUNT) or {}
         networks = []
-        for network in account["networks"]["data"]:
-            network_url = network["url"]
+        for network in account.get("networks", {}).get("data", []):
+            network_url = network.get("url")
+            if not network_url:
+                _LOGGER.debug("Skipping a network entry that reports no url")
+                continue
             network_id = network_url.replace("/2.2/networks/", "")
             if any(
                 [
@@ -378,12 +381,16 @@ class EeroAPI:
                     network_id in config,
                 ]
             ):
-                network_data = self.call(method=METHOD_GET, url=network_url)
-                network_data["thread"] = self.call(
-                    method=METHOD_GET,
-                    url=network_data["resources"]["thread"],
-                )
+                network_data = self.call(method=METHOD_GET, url=network_url) or {}
+                resources = network_data.get("resources", {})
+                if thread_url := resources.get("thread"):
+                    network_data["thread"] = self.call(
+                        method=METHOD_GET,
+                        url=thread_url,
+                    )
 
+                capabilities = network_data.get("capabilities", {})
+                backup_access_point = capabilities.get("backup_access_point", {})
                 if all(
                     [
                         any(
@@ -395,24 +402,21 @@ class EeroAPI:
                             ]
                         ),
                         backup_access_point_ok(
-                            capable=network_data["capabilities"][
-                                "backup_access_point"
-                            ]["capable"],
-                            requirements=network_data["capabilities"][
-                                "backup_access_point"
-                            ]["requirements"],
+                            capable=backup_access_point.get("capable"),
+                            requirements=backup_access_point.get("requirements"),
                         ),
                         premium_ok(
-                            capable=network_data["capabilities"]["premium"][
-                                "capable"
-                            ],
-                            status=network_data["premium_status"],
+                            capable=capabilities.get("premium", {}).get("capable"),
+                            status=network_data.get("premium_status"),
                         ),
                     ]
                 ):
-                    backup_access_points = self.call(
-                        method=METHOD_GET,
-                        url=f"{network_url}/backup_access_points",
+                    backup_access_points = (
+                        self.call(
+                            method=METHOD_GET,
+                            url=f"{network_url}/backup_access_points",
+                        )
+                        or []
                     )
                     network_data["backup_access_points"] = {
                         "count": len(backup_access_points),
@@ -439,14 +443,14 @@ class EeroAPI:
                         network_data, "profiles"
                     )
 
-                update_data = network_data["updates"]
+                update_data = network_data.get("updates") or {}
                 if config.get(network_id, EeroUpdateConfig()).get_release_notes:
                     update_data["release_notes"] = self.get_release_notes(
-                        url=update_data["manifest_resource"],
+                        url=update_data.get("manifest_resource"),
                     )
                 network_data["updates"] = update_data
 
-                network_id = network_url.replace("/2.2/networks/", "")
+                timezone = network_data.get("timezone", {}).get("value") or "UTC"
                 activity_data = {}
                 for resource, activities in config.get(
                     network_id, EeroUpdateConfig()
@@ -465,7 +469,7 @@ class EeroAPI:
                                         network_url=network_url,
                                         profile_id=profile_id,
                                         resource=resource,
-                                        timezone=network_data["timezone"]["value"],
+                                        timezone=timezone,
                                     )
                                 )
                         else:
@@ -475,7 +479,7 @@ class EeroAPI:
                                     network_url=network_url,
                                     profile_id=None,
                                     resource=resource,
-                                    timezone=network_data["timezone"]["value"],
+                                    timezone=timezone,
                                 )
                             )
                 network_data["activity"] = activity_data
@@ -491,10 +495,11 @@ class EeroAPI:
         resource: str,
     ) -> dict:
         """Get resource data."""
-        resource_data = self.call(
-            method=METHOD_GET,
-            url=network_data["resources"][resource],
-        )
+        url = network_data.get("resources", {}).get(resource)
+        if not url:
+            _LOGGER.debug("Network reports no %s resource", resource)
+            return {"count": 0, "data": []}
+        resource_data = self.call(method=METHOD_GET, url=url) or []
         return {
             "count": len(resource_data),
             "data": resource_data,
@@ -526,10 +531,13 @@ class EeroAPI:
         }
         if ACTIVITY_MAP[activity][1]:
             json_data["insight_type"] = ACTIVITY_MAP[activity][1]
-        data = self.call(
-            method=METHOD_GET,
-            url=activity_url,
-            json=json_data,
+        data = (
+            self.call(
+                method=METHOD_GET,
+                url=activity_url,
+                json=json_data,
+            )
+            or {}
         )
         return data.get("insights", data.get("series", data.get("values")))
 

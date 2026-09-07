@@ -431,13 +431,16 @@ class EeroNetwork(EeroResource):
         )
 
     @property
-    def firmware_history(self) -> list[EeroFirmware | None]:
+    def _release_notes(self) -> dict:
+        """Release notes block, or an empty dict when the network reports none."""
+        return self.data.get("updates", {}).get("release_notes") or {}
+
+    @property
+    def firmware_history(self) -> list[EeroFirmware]:
         """Firmware history."""
         return [
             EeroFirmware(firmware)
-            for firmware in self.data.get("updates", {})
-            .get("release_notes", {})
-            .get("history", [])
+            for firmware in self._release_notes.get("history") or []
         ]
 
     @property
@@ -765,9 +768,7 @@ class EeroNetwork(EeroResource):
     @property
     def target_firmware(self) -> EeroFirmware:
         """Target firmware."""
-        return EeroFirmware(
-            self.data.get("updates", {}).get("release_notes", {}).get("target", {})
-        )
+        return EeroFirmware(self._release_notes.get("target") or {})
 
     @property
     def thread_active_operational_dataset(self) -> str | None:

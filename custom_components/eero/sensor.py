@@ -70,6 +70,14 @@ SPEED_UNIT_MAP = {
 }
 
 
+def sum_data_usage(resource, key: str) -> int | None:
+    """Return total bytes for a (download, upload) pair, or None if neither is reported."""
+    down, up = getattr(resource, key)
+    if down is None and up is None:
+        return None
+    return (down or 0) + (up or 0)
+
+
 @dataclass
 class EeroSensorEntityDescription(EeroEntityDescription, SensorEntityDescription):
     """Class to describe an Eero sensor entity."""
@@ -156,9 +164,7 @@ SENSOR_DESCRIPTIONS: list[EeroSensorEntityDescription] = [
         name="Data Usage Day",
         device_class=SensorDeviceClass.DATA_SIZE,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        native_value=lambda resource, key: (
-            getattr(resource, key)[0] + getattr(resource, key)[1]
-        ),
+        native_value=sum_data_usage,
         native_unit_of_measurement=UnitOfInformation.BYTES,
         activity_type=True,
     ),
@@ -167,9 +173,7 @@ SENSOR_DESCRIPTIONS: list[EeroSensorEntityDescription] = [
         name="Data Usage Week",
         device_class=SensorDeviceClass.DATA_SIZE,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        native_value=lambda resource, key: (
-            getattr(resource, key)[0] + getattr(resource, key)[1]
-        ),
+        native_value=sum_data_usage,
         native_unit_of_measurement=UnitOfInformation.BYTES,
         activity_type=True,
     ),
@@ -178,9 +182,7 @@ SENSOR_DESCRIPTIONS: list[EeroSensorEntityDescription] = [
         name="Data Usage Month",
         device_class=SensorDeviceClass.DATA_SIZE,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        native_value=lambda resource, key: (
-            getattr(resource, key)[0] + getattr(resource, key)[1]
-        ),
+        native_value=sum_data_usage,
         native_unit_of_measurement=UnitOfInformation.BYTES,
         activity_type=True,
     ),
@@ -453,7 +455,8 @@ class EeroSensorEntity(EeroEntity, SensorEntity):
             and self.resource.is_network
         ):
             data = getattr(self.resource, self.entity_description.key)
-            attrs = {key: value for key, value in data.items() if key != "blocked"}
+            if isinstance(data, dict):
+                attrs = {key: value for key, value in data.items() if key != "blocked"}
         if self.entity_description.key.startswith("data_usage"):
             attrs["download"], attrs["upload"] = getattr(
                 self.resource, self.entity_description.key

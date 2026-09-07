@@ -35,10 +35,12 @@ class EeroDevice(EeroResource):
     @property
     def current_firmware(self) -> EeroFirmware:
         """Current firmware."""
+        if not (os_version := self.os_version):
+            return EeroFirmware()
         history = {
             firmware.os_version: firmware for firmware in self.network.firmware_history
         }
-        return history.get(self.os_version.split("-")[0], EeroFirmware())
+        return history.get(os_version.split("-")[0], EeroFirmware())
 
     @property
     def data_usage_day(self) -> tuple[int | None, int | None]:

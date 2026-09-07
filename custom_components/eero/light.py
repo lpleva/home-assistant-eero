@@ -90,9 +90,11 @@ class EeroLightEntity(EeroEntity, LightEntity):
         return bool(getattr(self.resource, self.entity_description.key))
 
     @property
-    def brightness(self) -> int:
+    def brightness(self) -> int | None:
         """Return the brightness of this light between 0..255."""
-        return int(self.resource.status_light_brightness * 255 / 100)
+        if (brightness := self.resource.status_light_brightness) is None:
+            return None
+        return round(brightness * 255 / 100)
 
     @property
     def color_mode(self) -> str:
