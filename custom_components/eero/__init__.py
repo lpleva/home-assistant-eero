@@ -13,7 +13,7 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, CONF_SCAN_INTERVAL, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import (
     config_validation as cv,
@@ -28,7 +28,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .api import EeroAPI, EeroException, EeroSessionExpired, EeroUpdateConfig
-from .api.const import SUPPORTED_APPS
+from .api.const import CONNECT_TIMEOUT, SUPPORTED_APPS
 from .api.network import EeroNetwork
 from .api.resource import EeroResource
 from .config_flow import EeroConfigFlow
@@ -387,6 +387,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
                         )
                         entity_registry.async_remove(entity_entry.entity_id)
 
+    @callback
+    def _persist_token(token: str) -> None:
+        """Write a refreshed session token back to the config entry."""
+        if token and token != config_entry.data.get(CONF_USER_TOKEN):
+            hass.config_entries.async_update_entry(
+                config_entry, data={**config_entry.data, CONF_USER_TOKEN: token}
+            )
+
     api = EeroAPI(
         save_location=hass.config.path(".storage", DEFAULT_SAVE_DIRECTORY)
         if conf_save_responses
@@ -396,6 +404,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
             for network_id, miscellaneous in conf_miscellaneous.items()
         },
         user_token=data[CONF_USER_TOKEN],
+        request_timeout=(CONNECT_TIMEOUT, conf_timeout),
+        token_callback=lambda token: hass.loop.call_soon_threadsafe(
+            _persist_token, token
+        ),
     )
 
     conf_update = {}

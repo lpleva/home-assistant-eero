@@ -21,6 +21,7 @@ from .const import (
     API_ENDPOINT,
     CADENCE_DAILY,
     CADENCE_HOURLY,
+    DEFAULT_REQUEST_TIMEOUT,
     EERO_LOGO_ICON,
     METHOD_DELETE,
     METHOD_GET,
@@ -77,6 +78,8 @@ class EeroAPI:
         save_location: str | None = None,
         show_eero_logo: dict[str, bool] | None = None,
         user_token: str | None = None,
+        request_timeout: float | tuple[float, float] | None = None,
+        token_callback: Callable[[str], None] | None = None,
     ) -> None:
         """Initialize."""
         self.data = EeroAccount(self, {})
@@ -85,6 +88,8 @@ class EeroAPI:
         self.session = requests.Session()
         self.show_eero_logo = show_eero_logo
         self.user_token = user_token
+        self.request_timeout = request_timeout or DEFAULT_REQUEST_TIMEOUT
+        self.token_callback = token_callback
         if self.show_eero_logo is None:
             self.show_eero_logo = {}
 
@@ -102,6 +107,7 @@ class EeroAPI:
         if method not in [METHOD_DELETE, METHOD_GET, METHOD_POST, METHOD_PUT]:
             return None
         _LOGGER.debug("Calling API with method: %s and URL: %s", method, url)
+        kwargs.setdefault("timeout", self.request_timeout)
         if method == METHOD_DELETE:
             response = self.parse_response(
                 lambda: self.session.delete(
@@ -176,7 +182,9 @@ class EeroAPI:
     def get_release_notes(self, url: str) -> dict[str, Any] | None:
         """Get release notes."""
         if url:
-            response = self.timeout(lambda: self.session.get(url=url))
+            response = self.raise_on_transport_error(
+                lambda: self.session.get(url=url, timeout=self.request_timeout)
+            )
             if not response.ok:
                 raise EeroException(
                     code=response.status_code,
@@ -214,6 +222,8 @@ class EeroAPI:
                 message="Session refresh did not return a session token"
             )
         self.user_token = response["user_token"]
+        if self.token_callback:
+            self.token_callback(self.user_token)
         return response
 
     def login_verify(self, code: str) -> dict[str, Any]:
@@ -252,7 +262,7 @@ class EeroAPI:
         raises EeroSessionExpired, which the integration turns into a reauth
         request rather than retrying forever.
         """
-        response = self.timeout(function)
+        response = self.raise_on_transport_error(function)
         if not response.ok:
             if response.status_code == 429:
                 raise EeroRateLimited(
@@ -270,7 +280,7 @@ class EeroAPI:
             if session_dead and allow_refresh:
                 _LOGGER.debug("Session has expired, refreshing once")
                 self.login_refresh()
-                response = self.timeout(function)
+                response = self.raise_on_transport_error(function)
                 if not response.ok:
                     raise EeroSessionExpired(
                         code=response.status_code,
@@ -299,13 +309,17 @@ class EeroAPI:
         except (TypeError, ValueError):
             return None
 
-    def timeout(self, function: Callable) -> requests.Response:
-        """Timeout."""
+    def raise_on_transport_error(self, function: Callable) -> requests.Response:
+        """Run the request, converting a transport failure into an EeroException."""
         try:
             return function()
         except requests.exceptions.Timeout as exception:
             raise EeroException(
                 message="Request timed out",
+            ) from exception
+        except requests.exceptions.RequestException as exception:
+            raise EeroException(
+                message=f"Request failed: {type(exception).__name__}",
             ) from exception
 
     def redact(self, obj: Any) -> Any:
