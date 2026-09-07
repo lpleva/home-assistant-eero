@@ -186,4 +186,16 @@ class EeroDeviceTrackerEntity(EeroEntity, BaseScannerEntity):
             if manufacturer := self.resource.manufacturer:
                 attrs[ATTR_MANUFACTURER] = manufacturer
             attrs["network_name"] = self.network.name
+            if self.resource.wireless:
+                frequency, frequency_unit = self.resource.interface_frequency
+                if frequency:
+                    attrs["band"] = (
+                        f"{frequency} {frequency_unit}".strip()
+                        if frequency_unit
+                        else str(frequency)
+                    )
+                if self.resource.channel is not None:
+                    attrs["channel"] = self.resource.channel
+                if channel_width := self.resource.channel_width_rx:
+                    attrs["channel_width"] = channel_width
         return attrs
