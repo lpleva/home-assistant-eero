@@ -595,16 +595,22 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 errors["base"] = "invalid_code"
             else:
-                if log_id := (response or {}).get("log_id"):
+                # The initial flow treats log_id as mandatory, so its absence
+                # is a broken response, not a valid one. Fail closed rather
+                # than write a token in without checking the account.
+                if not (log_id := (response or {}).get("log_id")):
+                    _LOGGER.error("Verification response carried no account ID")
+                    errors["base"] = "invalid_code"
+                else:
                     await self.async_set_unique_id(log_id.lower())
                     self._abort_if_unique_id_mismatch(reason="wrong_account")
-                return self.async_update_reload_and_abort(
-                    self._get_reauth_entry(),
-                    data_updates={
-                        CONF_LOGIN: self.reauth_login,
-                        CONF_USER_TOKEN: self.reauth_token,
-                    },
-                )
+                    return self.async_update_reload_and_abort(
+                        self._get_reauth_entry(),
+                        data_updates={
+                            CONF_LOGIN: self.reauth_login,
+                            CONF_USER_TOKEN: self.reauth_token,
+                        },
+                    )
 
         return self.async_show_form(
             step_id="reauth_verify",
