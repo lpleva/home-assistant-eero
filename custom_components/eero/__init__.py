@@ -21,6 +21,7 @@ from homeassistant.helpers import (
     entity_registry as er,
 )
 from homeassistant.helpers.entity import EntityDescription
+from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -574,6 +575,8 @@ async def async_update_listener(hass: HomeAssistant, config_entry: ConfigEntry) 
 class EeroEntity(CoordinatorEntity):
     """Representation of an Eero entity."""
 
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         coordinator: DataUpdateCoordinator,
@@ -655,6 +658,8 @@ class EeroEntity(CoordinatorEntity):
             )
             if self.suffix_connection_type:
                 name = self.resource.name_connection_type
+        if self.prefix_network_name and not self.resource.is_network:
+            name = f"{self.network.name} {name}"
 
         entry_type, suggested_area, sw_version, hw_version, via_device = (
             None,
@@ -698,25 +703,17 @@ class EeroEntity(CoordinatorEntity):
         )
 
     @property
-    def name(self) -> str:
-        """Return the name of the entity."""
-        if self.resource.is_client:
-            name = self.resource.name
-            if self.suffix_connection_type:
-                name = self.resource.name_connection_type
-            if self.prefix_network_name:
-                name = f"{self.network.name} {name}"
-            return f"{name} {self.entity_description.name}"
-        if (
-            self.resource.is_backup_network
-            or self.resource.is_eero
-            or self.resource.is_profile
-        ):
-            name = f"{self.resource.name} {self.entity_description.name}"
-            if self.prefix_network_name:
-                name = f"{self.network.name} {name}"
-            return name
-        return f"{self.resource.name} {self.entity_description.name}"
+    def name(self) -> str | None:
+        """Return the entity portion of the name.
+
+        has_entity_name is set, so Home Assistant prefixes the device name and
+        this returns the short suffix only. None means the entity carries the
+        device name alone.
+        """
+        name = self.entity_description.name
+        if name is UNDEFINED:
+            return None
+        return name
 
 
 @dataclass
