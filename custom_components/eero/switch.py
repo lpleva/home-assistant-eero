@@ -145,7 +145,7 @@ SWITCH_DESCRIPTIONS: list[EeroSwitchEntityDescription] = [
         premium_type=True,
     ),
     EeroSwitchEntityDescription(
-        key="secondary_wan_deny_access",
+        key="secondary_wan_allow_access",
         name="Allow Internet Backup",
         premium_type=True,
     ),

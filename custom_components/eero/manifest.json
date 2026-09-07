@@ -2,17 +2,14 @@
   "domain": "eero",
   "name": "eero",
   "after_dependencies": [],
-  "codeowners": [
-    "@schmittx"
-  ],
+  "codeowners": ["@schmittx"],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/schmittx/home-assistant-eero",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/schmittx/home-assistant-eero/issues",
-  "loggers": [],
-  "quality_scale": "gold",
+  "loggers": ["requests"],
   "requirements": [],
-  "version": "1.8.1"
+  "version": "1.9.0"
 }

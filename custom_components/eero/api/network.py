@@ -575,10 +575,12 @@ class EeroNetwork(EeroResource):
 
     @property
     def name_unique(self) -> str | None:
-        """Name unique."""
-        if self.nickname:
-            return f'{self.name} "{self.nickname}" ({self.city}, {self.region_name})'
-        return f"{self.name} ({self.city}, {self.region_name})"
+        """Human-readable label that distinguishes networks with the same name."""
+        label = f'{self.name} "{self.nickname}"' if self.nickname else self.name
+        parts = [part for part in (self.city, self.region_name) if part]
+        if parts:
+            return f"{label} ({', '.join(parts)})"
+        return label
 
     @property
     def password(self) -> str | None:
@@ -625,9 +627,9 @@ class EeroNetwork(EeroResource):
         hour = self.data.get("updates", {}).get("preferred_update_hour")
         if hour is None:
             return hour
-        return self.preferred_update_hour_options[
-            list(PREFERRED_UPDATE_HOUR_MAP.values()).index(hour)
-        ]
+        return {value: key for key, value in PREFERRED_UPDATE_HOUR_MAP.items()}.get(
+            hour
+        )
 
     @preferred_update_hour.setter
     def preferred_update_hour(self, value: str) -> None:

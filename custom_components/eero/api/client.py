@@ -288,12 +288,12 @@ class EeroClient(EeroResource):
         )
 
     @property
-    def secondary_wan_deny_access(self) -> bool | None:
-        """Secondary WAN deny access."""
+    def secondary_wan_allow_access(self) -> bool | None:
+        """Whether this client may use the internet backup connection."""
         return not self.data.get("secondary_wan_deny_access")
 
-    @secondary_wan_deny_access.setter
-    def secondary_wan_deny_access(self, value: bool) -> None:
+    @secondary_wan_allow_access.setter
+    def secondary_wan_allow_access(self, value: bool) -> None:
         if not isinstance(value, bool):
             return
         self.api.call(
@@ -306,10 +306,11 @@ class EeroClient(EeroResource):
     def signal(self) -> tuple[int | None, str | None]:
         """Signal."""
         if signal := self.data.get("connectivity", {}).get("signal"):
-            return (
-                int(signal.split()[0]),
-                signal.split()[1],
-            )
+            parts = signal.split()
+            try:
+                return (int(parts[0]), parts[1])
+            except (IndexError, ValueError):
+                _LOGGER.debug("Unexpected signal format: %s", signal)
         return (None, None)
 
     @property

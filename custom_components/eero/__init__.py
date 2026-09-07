@@ -462,6 +462,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     coordinator = DataUpdateCoordinator(
         hass=hass,
         logger=_LOGGER,
+        config_entry=config_entry,
         name=f"Eero ({data[CONF_NAME]})",
         update_method=async_update_data,
         update_interval=timedelta(seconds=conf_scan_interval),
