@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from asyncio import timeout
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta
@@ -443,12 +442,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     async def async_update_data():
         """Fetch data from API endpoint.
 
-        This is the place to pre-process the data to lookup tables
-        so entities can quickly look up their data.
+        No asyncio timeout around the poll: cancelling the await abandons the
+        coroutine without killing the worker thread, which is the leak H1 was
+        about. Each request carries its own (connect, read) timeout instead,
+        and a poll is many requests, so one budget for all of them was wrong
+        anyway.
         """
         try:
-            async with timeout(conf_timeout):
-                return await hass.async_add_executor_job(api.update, conf_update)
+            return await hass.async_add_executor_job(api.update, conf_update)
         except EeroSessionExpired as error:
             raise ConfigEntryAuthFailed(
                 "Eero session expired, please sign in again"
