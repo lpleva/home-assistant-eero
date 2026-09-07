@@ -2,7 +2,9 @@
   "domain": "eero",
   "name": "eero",
   "after_dependencies": [],
-  "codeowners": ["@schmittx"],
+  "codeowners": [
+    "@schmittx"
+  ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/schmittx/home-assistant-eero",
@@ -11,6 +13,6 @@
   "issue_tracker": "https://github.com/schmittx/home-assistant-eero/issues",
   "loggers": [],
   "quality_scale": "gold",
-  "requirements": ["pypng==0.0.20", "PyQRCode==1.2.1"],
+  "requirements": [],
   "version": "1.8.1"
 }

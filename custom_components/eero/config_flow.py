@@ -44,7 +44,6 @@ from .const import (
     CONF_PROFILES,
     CONF_RESOURCES,
     CONF_SAVE_RESPONSES,
-    CONF_SHOW_EERO_LOGO,
     CONF_SUFFIX_CONNECTION_TYPE,
     CONF_TIMEOUT,
     CONF_USER_TOKEN,
@@ -57,7 +56,6 @@ from .const import (
     DEFAULT_PREFIX_NETWORK_NAME,
     DEFAULT_SAVE_RESPONSES,
     DEFAULT_SCAN_INTERVAL,
-    DEFAULT_SHOW_EERO_LOGO,
     DEFAULT_SUFFIX_CONNECTION_TYPE,
     DEFAULT_TIMEOUT,
     DEFAULT_WIRED_CLIENTS_FILTER,
@@ -444,7 +442,6 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_SUFFIX_CONNECTION_TYPE: user_input[
                             CONF_SUFFIX_CONNECTION_TYPE
                         ],
-                        CONF_SHOW_EERO_LOGO: user_input[CONF_SHOW_EERO_LOGO],
                     }
                     self.index += 1
 
@@ -482,9 +479,6 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             vol.Optional(
                                 CONF_SUFFIX_CONNECTION_TYPE,
                                 default=DEFAULT_SUFFIX_CONNECTION_TYPE,
-                            ): BooleanSelector(),
-                            vol.Optional(
-                                CONF_SHOW_EERO_LOGO, default=DEFAULT_SHOW_EERO_LOGO
                             ): BooleanSelector(),
                         }
                     ),
@@ -991,7 +985,6 @@ class EeroOptionsFlowHandler(config_entries.OptionsFlow):
                         CONF_SUFFIX_CONNECTION_TYPE: user_input[
                             CONF_SUFFIX_CONNECTION_TYPE
                         ],
-                        CONF_SHOW_EERO_LOGO: user_input[CONF_SHOW_EERO_LOGO],
                     }
                     self.index += 1
 
@@ -1019,10 +1012,6 @@ class EeroOptionsFlowHandler(config_entries.OptionsFlow):
                 conf_suffix_connection_type = conf_miscellaneous.get(
                     CONF_SUFFIX_CONNECTION_TYPE, DEFAULT_SUFFIX_CONNECTION_TYPE
                 )
-                conf_show_eero_logo = conf_miscellaneous.get(
-                    CONF_SHOW_EERO_LOGO, DEFAULT_SHOW_EERO_LOGO
-                )
-
                 return self.async_show_form(
                     step_id="miscellaneous",
                     data_schema=vol.Schema(
@@ -1044,9 +1033,6 @@ class EeroOptionsFlowHandler(config_entries.OptionsFlow):
                             vol.Optional(
                                 CONF_SUFFIX_CONNECTION_TYPE,
                                 default=conf_suffix_connection_type,
-                            ): BooleanSelector(),
-                            vol.Optional(
-                                CONF_SHOW_EERO_LOGO, default=conf_show_eero_logo
                             ): BooleanSelector(),
                         }
                     ),

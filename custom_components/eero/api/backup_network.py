@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from .const import METHOD_PUT
 from .resource import EeroResource
-from .util import generate_qr_code
 
 
 class EeroBackupNetwork(EeroResource):
@@ -68,21 +67,6 @@ class EeroBackupNetwork(EeroResource):
     def password(self) -> str | None:
         """Password."""
         return self.data.get("password")
-
-    @property
-    def qr_code(self) -> bytes | None:
-        """QR code."""
-        if all(
-            [
-                not self.auto_join_enabled,
-                self.api.show_eero_logo.get(self.network.id),
-            ]
-        ):
-            return self.api.default_qr_code
-        return generate_qr_code(
-            ssid=self.ssid,
-            password=self.password,
-        )
 
     @property
     def ssid(self) -> str | None:

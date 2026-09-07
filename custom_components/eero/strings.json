@@ -72,7 +72,6 @@
                 "data": {
                     "consider_home": "Consider home interval (applicable to device tracker entities only)",
                     "prefix_network_name": "Add network name as a prefix for all non-network entities",
-                    "show_eero_logo": "Show the Eero logo instead of a QR code if the network is disabled",
                     "suffix_connection_type": "Add connection type (wired or wireless) as a suffix for all client devices and entities"
                 },
                 "description": "Network: {network}",
@@ -127,7 +126,6 @@
                 "data": {
                     "consider_home": "Consider home interval (applicable to device tracker entities only)",
                     "prefix_network_name": "Add network name as a prefix for all non-network entities",
-                    "show_eero_logo": "Show the Eero logo instead of a QR code if the network is disabled",
                     "suffix_connection_type": "Add connection type (wired or wireless) as a suffix for all client devices and entities"
                 },
                 "description": "Network: {network}",

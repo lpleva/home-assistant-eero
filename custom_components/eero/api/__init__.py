@@ -11,7 +11,6 @@ from typing import Any
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
-import aiofiles
 from dateutil import relativedelta
 import requests
 
@@ -22,7 +21,6 @@ from .const import (
     CADENCE_DAILY,
     CADENCE_HOURLY,
     DEFAULT_REQUEST_TIMEOUT,
-    EERO_LOGO_ICON,
     METHOD_DELETE,
     METHOD_GET,
     METHOD_POST,
@@ -76,22 +74,17 @@ class EeroAPI:
     def __init__(
         self,
         save_location: str | None = None,
-        show_eero_logo: dict[str, bool] | None = None,
         user_token: str | None = None,
         request_timeout: float | tuple[float, float] | None = None,
         token_callback: Callable[[str], None] | None = None,
     ) -> None:
         """Initialize."""
         self.data = EeroAccount(self, {})
-        self.default_qr_code: bytes | None = None
         self.save_location = save_location
         self.session = requests.Session()
-        self.show_eero_logo = show_eero_logo
         self.user_token = user_token
         self.request_timeout = request_timeout or DEFAULT_REQUEST_TIMEOUT
         self.token_callback = token_callback
-        if self.show_eero_logo is None:
-            self.show_eero_logo = {}
 
     @property
     def cookie(self) -> dict:
@@ -173,11 +166,6 @@ class EeroAPI:
         start = f"{start.astimezone(datetime.UTC).replace(tzinfo=None).isoformat()}Z"
         end = f"{end.astimezone(datetime.UTC).replace(tzinfo=None).isoformat()}Z"
         return (start, end, cadence)
-
-    async def generate_default_qr_code(self) -> None:
-        """Generate default QR code."""
-        async with aiofiles.open(EERO_LOGO_ICON, "rb") as file:
-            self.default_qr_code = await file.read()
 
     def get_release_notes(self, url: str) -> dict[str, Any] | None:
         """Get release notes."""

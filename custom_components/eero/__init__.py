@@ -54,7 +54,6 @@ from .const import (
     CONF_PROFILES,
     CONF_RESOURCES,
     CONF_SAVE_RESPONSES,
-    CONF_SHOW_EERO_LOGO,
     CONF_SUFFIX_CONNECTION_TYPE,
     CONF_TIMEOUT,
     CONF_USER_TOKEN,
@@ -70,7 +69,6 @@ from .const import (
     DEFAULT_SAVE_DIRECTORY,
     DEFAULT_SAVE_RESPONSES,
     DEFAULT_SCAN_INTERVAL,
-    DEFAULT_SHOW_EERO_LOGO,
     DEFAULT_SUFFIX_CONNECTION_TYPE,
     DEFAULT_TIMEOUT,
     DEFAULT_WIRED_CLIENTS_FILTER,
@@ -103,7 +101,6 @@ PLATFORMS = [
     Platform.BINARY_SENSOR,
     Platform.BUTTON,
     Platform.DEVICE_TRACKER,
-    Platform.IMAGE,
     Platform.LIGHT,
     Platform.NUMBER,
     Platform.SELECT,
@@ -211,10 +208,6 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                         data.get(
                             CONF_SUFFIX_CONNECTION_TYPE, DEFAULT_SUFFIX_CONNECTION_TYPE
                         ),
-                    ),
-                    CONF_SHOW_EERO_LOGO: options.get(
-                        CONF_SHOW_EERO_LOGO,
-                        data.get(CONF_SHOW_EERO_LOGO, DEFAULT_SHOW_EERO_LOGO),
                     ),
                 }
 
@@ -400,10 +393,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         save_location=hass.config.path(".storage", DEFAULT_SAVE_DIRECTORY)
         if conf_save_responses
         else None,
-        show_eero_logo={
-            network_id: miscellaneous[CONF_SHOW_EERO_LOGO]
-            for network_id, miscellaneous in conf_miscellaneous.items()
-        },
         user_token=data[CONF_USER_TOKEN],
         request_timeout=(CONNECT_TIMEOUT, conf_timeout),
         token_callback=lambda token: hass.loop.call_soon_threadsafe(

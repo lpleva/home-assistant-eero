@@ -22,7 +22,7 @@ from .eero import EeroDevice, EeroDeviceBeacon
 from .firmware import EeroFirmware
 from .profile import EeroProfile
 from .resource import EeroResource
-from .util import generate_qr_code, premium_ok
+from .util import premium_ok
 
 
 class EeroNetwork(EeroResource):
@@ -492,21 +492,6 @@ class EeroNetwork(EeroResource):
         return self.data.get("guest_network", {}).get("password")
 
     @property
-    def guest_network_qr_code(self) -> bytes | None:
-        """Guest network QR code."""
-        if all(
-            [
-                not self.guest_network_enabled,
-                self.api.show_eero_logo.get(self.id),
-            ]
-        ):
-            return self.api.default_qr_code
-        return generate_qr_code(
-            ssid=self.guest_network_name,
-            password=self.guest_network_password,
-        )
-
-    @property
     def health_eero_network_status(self) -> str | None:
         """Health Eero network status."""
         return self.data.get("health", {}).get("eero_network", {}).get("status")
@@ -683,14 +668,6 @@ class EeroNetwork(EeroResource):
     def public_ip(self) -> str | None:
         """Public IP."""
         return self.data.get("ip_settings", {}).get("public_ip")
-
-    @property
-    def qr_code(self) -> bytes | None:
-        """QR code."""
-        return generate_qr_code(
-            ssid=self.ssid,
-            password=self.password,
-        )
 
     def reboot(self) -> None:
         """Reboot."""
