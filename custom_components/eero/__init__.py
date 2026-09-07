@@ -596,7 +596,8 @@ async def async_update_listener(hass: HomeAssistant, config_entry: ConfigEntry) 
     running API object already holds, so it is the one change that needs no
     reload; a token that arrived from the reauth flow does not match, and does.
     """
-    if (entry_data := hass.data[DOMAIN].get(config_entry.entry_id)) is None:
+    entry_data = hass.data.get(DOMAIN, {}).get(config_entry.entry_id)
+    if entry_data is None:
         return
     options = dict(config_entry.options)
     if all(
