@@ -343,8 +343,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
                 )
                 try:
                     device_registry.async_remove_device(device_entry.id)
-                except (KeyError, ValueError):
-                    pass
+                except KeyError:
+                    # This loop iterates a snapshot of the registry, so a device
+                    # already removed as a side effect of removing its
+                    # via_device parent is reached a second time.
+                    _LOGGER.debug(
+                        "Device entry %s was already removed", device_entry.id
+                    )
             else:
                 for entity_entry in er.async_entries_for_device(
                     entity_registry, device_entry.id

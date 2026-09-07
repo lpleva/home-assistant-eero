@@ -109,7 +109,9 @@ class EeroLightEntity(EeroEntity, LightEntity):
     def turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         if ATTR_BRIGHTNESS in kwargs:
-            brightness = int(kwargs[ATTR_BRIGHTNESS] * 100 / 255)
+            # A brightness of 0 switches the light off, so clamp to 1: turn_on
+            # must not turn the light off.
+            brightness = max(1, round(kwargs[ATTR_BRIGHTNESS] * 100 / 255))
             self.resource.set_status_light_brightness(value=brightness)
         else:
             self.resource.set_status_light_on()

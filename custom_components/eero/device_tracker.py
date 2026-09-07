@@ -172,6 +172,12 @@ class EeroDeviceTrackerEntity(EeroEntity, BaseScannerEntity):
         if self.is_connected and self.resource.is_client:
             attrs["connected_to"] = self.resource.source_location
             attrs["connection_type"] = self.resource.connection_type
+            if ip_address := self.ip_address:
+                attrs["ip"] = ip_address
+            if mac_address := self.mac_address:
+                attrs["mac"] = mac_address
+            if hostname := self.hostname:
+                attrs["host_name"] = hostname
             if manufacturer := self.resource.manufacturer:
                 attrs[ATTR_MANUFACTURER] = manufacturer
             attrs["network_name"] = self.network.name
@@ -179,12 +185,12 @@ class EeroDeviceTrackerEntity(EeroEntity, BaseScannerEntity):
                 frequency, frequency_unit = self.resource.interface_frequency
                 if frequency:
                     attrs["band"] = (
-                        f"{frequency} {frequency_unit}".strip()
+                        f"{frequency} {frequency_unit}"
                         if frequency_unit
                         else str(frequency)
                     )
                 if self.resource.channel is not None:
                     attrs["channel"] = self.resource.channel
-                if channel_width := self.resource.channel_width_rx:
-                    attrs["channel_width"] = channel_width
+                if channel_width_rx := self.resource.channel_width_rx:
+                    attrs["channel_width_rx"] = channel_width_rx
         return attrs
