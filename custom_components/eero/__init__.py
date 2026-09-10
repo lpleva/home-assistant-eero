@@ -38,6 +38,7 @@ from .api.const import CONNECT_TIMEOUT, SUPPORTED_APPS
 from .api.network import EeroNetwork
 from .api.resource import EeroResource
 from .config_flow import EeroConfigFlow
+from .device_removal import can_remove_device
 from .const import (
     ACTIVITIES_PREMIUM,
     ATTR_BLOCKED_APPS,
@@ -569,6 +570,37 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
     return True
+
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: dr.DeviceEntry
+) -> bool:
+    """Let Home Assistant delete a client device from its device page.
+
+    Without this hook the delete button is refused ("Config entry does not
+    support device removal"), and dead clients (a box whose wifi was turned
+    off, a phone that never came back) stay forever with their 8 entities each,
+    logged by the recorder every poll. The rule itself is in device_removal.py.
+    """
+    entry_data = hass.data.get(DOMAIN, {}).get(config_entry.entry_id)
+    if entry_data is None:
+        return False
+    coordinator = entry_data[DATA_COORDINATOR]
+    connected: set[str] = set()
+    for network in coordinator.data.networks:
+        if network is None:
+            continue
+        for client in network.clients:
+            if client is not None and client.connected and client.id:
+                connected.add(client.id)
+    return can_remove_device(
+        device_entry.model,
+        device_entry.identifiers,
+        DOMAIN,
+        (MODEL_CLIENT_WIRED, MODEL_CLIENT_WIRELESS),
+        connected,
+    )
 
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:

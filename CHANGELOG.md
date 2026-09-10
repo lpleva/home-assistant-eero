@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9.2
+
+- Devices can be deleted from Home Assistant's device page: `async_remove_config_entry_device` allows it for a wired or wireless client the eero does not currently report as connected (it is recreated if the client comes back); never for the network, an eero or a profile. Before this, the delete button was refused and dead clients lingered with all their entities.
+
 ## 1.9.1
 
 Two fixes from the first run on Home Assistant 2026.9.1.
