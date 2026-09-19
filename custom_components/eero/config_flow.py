@@ -446,11 +446,10 @@ class EeroConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if self.index == len(self.user_input[CONF_NETWORKS]):
             self.index = 0
-            if self.show_advanced_options:
-                return await self.async_step_advanced()
-            return self.async_create_entry(
-                title=self.config_title, data=self.user_input
-            )
+            # Always offered. The old gate on the user's HA "advanced mode" flag
+            # "advanced mode" user toggle) is deprecated and removed in HA 2027.6; the
+            # three fields have defaults, so the step costs a non-advanced user one click.
+            return await self.async_step_advanced()
         if self.index == 0:
             self.user_input[CONF_MISCELLANEOUS] = {}
 
@@ -1002,9 +1001,10 @@ class EeroOptionsFlowHandler(config_entries.OptionsFlow):
 
         if self.index == len(self.user_input[CONF_NETWORKS]):
             self.index = 0
-            if self.show_advanced_options:
-                return await self.async_step_advanced()
-            return self.async_create_entry(title="", data=self.user_input)
+            # Always offered. The old gate on the user's HA "advanced mode" flag
+            # "advanced mode" user toggle) is deprecated and removed in HA 2027.6; the
+            # three fields have defaults, so the step costs a non-advanced user one click.
+            return await self.async_step_advanced()
         if self.index == 0:
             self.user_input[CONF_MISCELLANEOUS] = {}
 

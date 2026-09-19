@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9.3
+
+- The config and options flows always offer the Advanced options step (polling interval, timeout, save responses; all with defaults). It used to appear only when the Home Assistant user had "advanced mode" on, through `show_advanced_options`, which HA deprecated and removes in 2027.6.
+
 ## 1.9.2
 
 - Devices can be deleted from Home Assistant's device page: `async_remove_config_entry_device` allows it for a wired or wireless client the eero does not currently report as connected (it is recreated if the client comes back); never for the network, an eero or a profile. Before this, the delete button was refused and dead clients lingered with all their entities.
