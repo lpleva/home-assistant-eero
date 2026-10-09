@@ -9,4 +9,28 @@ set_blocked_apps:
       example: John Doe or 1234567
     target_network:
       required: False
-      example: My Network or 1234567    
+      example: My Network or 1234567
+
+set_reservation:
+  fields:
+    mac:
+      required: True
+      example: "aa:bb:cc:dd:ee:ff"
+    ip:
+      required: True
+      example: "192.168.4.65"
+    name:
+      required: False
+      example: "Chloe iPad"
+    target_network:
+      required: False
+      example: My Network or 1234567
+
+delete_reservation:
+  fields:
+    mac:
+      required: True
+      example: "aa:bb:cc:dd:ee:ff"
+    target_network:
+      required: False
+      example: My Network or 1234567

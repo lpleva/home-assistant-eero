@@ -47,6 +47,75 @@ Custom component to allow control of Eero networks in [Home Assistant](https://h
 - Set blocked apps for profiles (requires Eero Plus subscription)
 - Update entities for Eero device firmware management
 - Control backup networks (requires Eero Plus subscription)
+- Read DHCP reservations (static IPs), and create or delete one through two services (see below)
+
+## DHCP reservations
+
+Every client `device_tracker` reports whether its address is a static DHCP
+reservation, connected or not:
+
+- `ip_reserved` (bool): the client has a reservation
+- `reserved_ip`: the reserved address, when there is one
+
+Both are absent when the reservations could not be read on the last poll
+(the integration logs that once per network), so a missing attribute means
+"unknown", never "no".
+
+Two services write reservations. Each creates or deletes exactly one record,
+and every field is checked before anything is sent to eero: the MAC must be six
+hex pairs, the address an IPv4 host address inside the network's LAN subnet
+(not the network, broadcast or router address), the name at most 64 characters
+with no control characters, and `target_network` must resolve to exactly one
+network (it may be omitted when the account has one). Bad input raises a
+validation error; a refusal from eero raises a `HomeAssistantError` with eero's
+reason.
+
+**`eero.set_reservation`**: create one reservation. Refused if the MAC already
+has one or the address is already reserved for another MAC; change a device's
+address by deleting its reservation first.
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `mac` | yes | MAC address of the device (`aa:bb:cc:dd:ee:ff`) |
+| `ip` | yes | IPv4 address to assign |
+| `name` | no | Description shown for the reservation |
+| `target_network` | no | Network name or ID |
+
+**`eero.delete_reservation`**: remove the one reservation for a MAC.
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `mac` | yes | MAC address of the device |
+| `target_network` | no | Network name or ID |
+
+A dashboard button can pin a device to its current address with a short script
+that reads the tracker's `mac` and `ip` attributes:
+
+```yaml
+# scripts.yaml
+eero_toggle_reservation:
+  alias: "eero: toggle reservation"
+  fields:
+    tracker:
+      description: The eero device_tracker to reserve or release
+  sequence:
+    - choose:
+        - conditions: "{{ state_attr(tracker, 'ip_reserved') | default(false) }}"
+          sequence:
+            - action: eero.delete_reservation
+              data:
+                mac: "{{ state_attr(tracker, 'mac') }}"
+        - conditions: "{{ (state_attr(tracker, 'ip') | default('')) not in ['', 'None', none] }}"
+          sequence:
+            - action: eero.set_reservation
+              data:
+                mac: "{{ state_attr(tracker, 'mac') }}"
+                ip: "{{ state_attr(tracker, 'ip') }}"
+                name: "{{ state_attr(tracker, 'host_name') or tracker }}"
+```
+
+Ported from upstream PR #173 (credit to its author), with the input checks,
+the one-record rule and the error reporting added in this fork.
 
 ## Coming Soon
 - TBD, feature requests are welcome.

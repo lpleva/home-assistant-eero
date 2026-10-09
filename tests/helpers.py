@@ -80,11 +80,13 @@ class FakeSession:
             for path, value in routes.items()
         }
         self.calls: list[tuple[str, str]] = []
+        self.bodies: list[tuple[str, str, Any]] = []  # (method, path, json body)
         self.closed = False
 
     def _serve(self, method: str, url: str, **kwargs) -> FakeResponse:
         path = url.replace("https://api-user.e2ro.com", "")
         self.calls.append((method, path))
+        self.bodies.append((method, path, kwargs.get("json")))
         assert "timeout" in kwargs, f"{method} {path} was sent with no timeout"
         if path not in self.routes:
             raise AssertionError(f"unexpected request: {method} {path}")

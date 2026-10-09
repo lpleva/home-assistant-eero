@@ -25,7 +25,15 @@ spec.loader.exec_module(ta)
 NETWORK = "/2.2/networks/1234567"
 
 
-def client(**overrides) -> eero_api.client.EeroClient:
+class FakeNetwork:
+    """The one thing the client reads from its network here: reservations."""
+
+    def __init__(self, reservations=None) -> None:
+        """Initialize."""
+        self.reservations = reservations
+
+
+def client(reservations=None, **overrides) -> eero_api.client.EeroClient:
     """Return a wireless client connected to the office eero."""
     data = {
         "url": f"{NETWORK}/devices/aa:bb:cc:dd:ee:ff",
@@ -47,7 +55,9 @@ def client(**overrides) -> eero_api.client.EeroClient:
         },
     }
     data.update(overrides)
-    return eero_api.client.EeroClient(api=None, network=None, data=data)
+    return eero_api.client.EeroClient(
+        api=None, network=FakeNetwork(reservations), data=data
+    )
 
 
 def test_source_model_is_read_from_source() -> None:
@@ -137,3 +147,26 @@ def test_explicit_nulls_do_not_raise() -> None:
 def test_a_vanished_resource_yields_no_attributes() -> None:
     """A client the API no longer reports (H3) must not raise AttributeError."""
     assert ta.client_tracker_attributes(None, False, "TestNetwork") == {}
+
+
+def test_reservation_status_is_published_connected_or_not() -> None:
+    """ip_reserved and reserved_ip follow the reservation list (PR #173)."""
+    reservations = [{"mac": "AA-BB-CC-DD-EE-FF", "ip": "192.168.4.21", "url": "/r/1"}]
+    attrs = ta.client_tracker_attributes(client(reservations), True, "N")
+    assert attrs["ip_reserved"] is True
+    assert attrs["reserved_ip"] == "192.168.4.21"
+
+    attrs = ta.client_tracker_attributes(client(reservations, connected=False), False, "N")
+    assert attrs["ip_reserved"] is True
+    assert attrs["reserved_ip"] == "192.168.4.21"
+
+    attrs = ta.client_tracker_attributes(client([]), True, "N")
+    assert attrs["ip_reserved"] is False
+    assert "reserved_ip" not in attrs
+
+
+def test_unknown_reservations_publish_nothing() -> None:
+    """When the reservations fetch failed, neither attribute is claimed."""
+    attrs = ta.client_tracker_attributes(client(None), True, "N")
+    assert "ip_reserved" not in attrs
+    assert "reserved_ip" not in attrs

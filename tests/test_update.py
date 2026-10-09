@@ -12,6 +12,7 @@ DEVICES = f"{NETWORK}/devices"
 PROFILES = f"{NETWORK}/profiles"
 THREAD = f"{NETWORK}/thread"
 BACKUP = f"{NETWORK}/backup_access_points"
+RESERVATIONS = f"{NETWORK}/reservations"
 
 
 def full_routes(devices=None, network=None) -> dict:
@@ -23,6 +24,7 @@ def full_routes(devices=None, network=None) -> dict:
         DEVICES: ok(fixture("devices") if devices is None else devices),
         PROFILES: ok([]),
         BACKUP: ok([]),
+        RESERVATIONS: ok([]),
     }
 
 
@@ -48,6 +50,7 @@ def test_network_without_a_thread_resource(caplog) -> None:
         ACCOUNT: ok(fixture("account")),
         NETWORK: ok(fixture("network_no_thread")),
         DEVICES: ok(fixture("devices")),
+        RESERVATIONS: ok([]),
     }
     api = build_api(routes)
 
@@ -70,6 +73,7 @@ def test_network_missing_capabilities_updates_and_timezone() -> None:
             ACCOUNT: ok(fixture("account")),
             NETWORK: ok(network),
             DEVICES: ok([]),
+            RESERVATIONS: ok([]),
         }
     )
 

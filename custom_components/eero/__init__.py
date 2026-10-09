@@ -13,7 +13,11 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, CONF_SCAN_INTERVAL, Platform
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.exceptions import (
+    ConfigEntryAuthFailed,
+    HomeAssistantError,
+    ServiceValidationError,
+)
 from homeassistant.helpers import (
     config_validation as cv,
     device_registry as dr,
@@ -39,6 +43,14 @@ from .api.network import EeroNetwork
 from .api.resource import EeroResource
 from .config_flow import EeroConfigFlow
 from .device_removal import can_remove_device
+from .reservations import (
+    check_reservation_is_new,
+    clean_reservation_name,
+    find_reservation,
+    normalize_mac,
+    select_one,
+    validate_reservation_ip,
+)
 from .const import (
     ACTIVITIES_PREMIUM,
     ATTR_BLOCKED_APPS,
@@ -99,6 +111,34 @@ SET_BLOCKED_APPS_SCHEMA = vol.Schema(
         vol.Optional(ATTR_TARGET_PROFILE, default=[]): vol.All(
             cv.ensure_list, [vol.Any(cv.positive_int, cv.string)]
         ),
+        vol.Optional(ATTR_TARGET_NETWORK, default=[]): vol.All(
+            cv.ensure_list, [vol.Any(cv.positive_int, cv.string)]
+        ),
+    }
+)
+
+# DHCP reservation services (upstream PR #173). Input is checked by
+# reservations.py before any request; voluptuous only types the fields.
+ATTR_MAC = "mac"
+ATTR_IP = "ip"
+ATTR_NAME = "name"
+SERVICE_SET_RESERVATION = "set_reservation"
+SERVICE_DELETE_RESERVATION = "delete_reservation"
+
+SET_RESERVATION_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_MAC): cv.string,
+        vol.Required(ATTR_IP): cv.string,
+        vol.Optional(ATTR_NAME, default=""): cv.string,
+        vol.Optional(ATTR_TARGET_NETWORK, default=[]): vol.All(
+            cv.ensure_list, [vol.Any(cv.positive_int, cv.string)]
+        ),
+    }
+)
+
+DELETE_RESERVATION_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_MAC): cv.string,
         vol.Optional(ATTR_TARGET_NETWORK, default=[]): vol.All(
             cv.ensure_list, [vol.Any(cv.positive_int, cv.string)]
         ),
@@ -516,6 +556,61 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
             )
         await coordinator.async_request_refresh()
 
+    def _one_network(target_network) -> EeroNetwork:
+        """The single network a reservation write targets, or a validation error."""
+        try:
+            return select_one(
+                _validate_network(target_network=target_network),
+                "network",
+                "name one in target_network",
+            )
+        except ValueError as err:
+            raise ServiceValidationError(str(err)) from err
+
+    async def async_set_reservation(service):
+        """Create exactly one DHCP reservation."""
+        network = _one_network(service.data[ATTR_TARGET_NETWORK])
+        try:
+            mac = normalize_mac(service.data[ATTR_MAC])
+            ip = validate_reservation_ip(
+                service.data[ATTR_IP], network.lan_subnet, network.lan_gateway_ip
+            )
+            name = clean_reservation_name(service.data[ATTR_NAME])
+            check_reservation_is_new(network.reservations, mac, ip)
+        except ValueError as err:
+            raise ServiceValidationError(str(err)) from err
+        try:
+            await hass.async_add_executor_job(
+                network.create_reservation, mac, ip, name
+            )
+        except EeroException as err:
+            raise HomeAssistantError(
+                f"Eero did not accept the reservation for {mac}: {err}"
+            ) from err
+        await coordinator.async_request_refresh()
+
+    async def async_delete_reservation(service):
+        """Delete exactly one DHCP reservation, the one for the given MAC."""
+        network = _one_network(service.data[ATTR_TARGET_NETWORK])
+        try:
+            mac = normalize_mac(service.data[ATTR_MAC])
+            reservation = find_reservation(network.reservations, mac)
+            if reservation is None:
+                raise ValueError(f"{mac} has no reservation on {network.name}")
+        except ValueError as err:
+            raise ServiceValidationError(str(err)) from err
+        try:
+            await hass.async_add_executor_job(
+                network.delete_reservation, reservation
+            )
+        except ValueError as err:
+            raise HomeAssistantError(str(err)) from err
+        except EeroException as err:
+            raise HomeAssistantError(
+                f"Eero did not delete the reservation for {mac}: {err}"
+            ) from err
+        await coordinator.async_request_refresh()
+
     def _validate_network(target_network: str):
         return [
             network
@@ -556,6 +651,19 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
             async_set_blocked_apps,
             schema=SET_BLOCKED_APPS_SCHEMA,
         )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_RESERVATION,
+        async_set_reservation,
+        schema=SET_RESERVATION_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_DELETE_RESERVATION,
+        async_delete_reservation,
+        schema=DELETE_RESERVATION_SCHEMA,
+    )
 
     for network in coordinator.data.networks:
         if network.id in conf_networks:

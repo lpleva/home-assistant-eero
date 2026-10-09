@@ -898,6 +898,61 @@ class EeroNetwork(EeroResource):
         ]
 
     @property
+    def reservations(self) -> list[dict] | None:
+        """DHCP reservations, or None when the last fetch failed (PR #173)."""
+        block = self.data.get("reservations")
+        if block is None:
+            return None
+        return list(block.get("data") or [])
+
+    @property
+    def lan_subnet(self) -> str | None:
+        """The LAN subnet in CIDR form, or None if the network does not say.
+
+        A custom DHCP block carries subnet_ip and subnet_mask; eero's automatic
+        mode is always 192.168.4.0/22.
+        """
+        dhcp = self.data.get("dhcp") or {}
+        custom = dhcp.get("custom") or {}
+        if custom.get("subnet_ip") and custom.get("subnet_mask"):
+            return f"{custom['subnet_ip']}/{custom['subnet_mask']}"
+        if dhcp.get("mode") == "automatic":
+            return "192.168.4.0/22"
+        return None
+
+    @property
+    def lan_gateway_ip(self) -> str | None:
+        """The router's own LAN address, or None if the network does not say."""
+        dhcp = self.data.get("dhcp") or {}
+        custom = dhcp.get("custom") or {}
+        if custom.get("subnet_ip"):
+            return custom["subnet_ip"]
+        if dhcp.get("mode") == "automatic":
+            return "192.168.4.1"
+        return None
+
+    def create_reservation(self, mac: str, ip: str, description: str = "") -> dict | None:
+        """Create one DHCP reservation. The caller has validated the fields."""
+        return self.api.call(
+            method=METHOD_POST,
+            url=f"{self.url}/reservations",
+            json={"mac": mac, "ip": ip, "description": description},
+        )
+
+    def delete_reservation(self, reservation: dict) -> dict | None:
+        """Delete exactly the given reservation record, by its own URL.
+
+        Raises ValueError if the record carries no URL and no id, since a
+        delete must name one record and never a collection.
+        """
+        url = reservation.get("url")
+        if not url and reservation.get("id") not in (None, ""):
+            url = f"{self.url}/reservations/{reservation['id']}"
+        if not url or not str(url).startswith(f"{self.url}/reservations/"):
+            raise ValueError("the reservation record names no deletable URL")
+        return self.api.call(method=METHOD_DELETE, url=url)
+
+    @property
     def eeros(self) -> list[EeroDevice | EeroDeviceBeacon | None]:
         """Eeros."""
         eeros = []

@@ -10,6 +10,9 @@ Two groups of attributes:
   last, connected to. The API keeps reporting `source` after a client
   disconnects, so these stay set while the tracker reads not_home and say
   where the client was last seen (upstream PR #179).
+- `ip_reserved` and `reserved_ip`: whether the client's address is a DHCP
+  reservation, and which address. Published whenever the reservations could
+  be read, connected or not (upstream PR #173).
 - Everything else describes the live connection (type, addresses, band,
   channel) and is published only while the client is connected.
 """
@@ -32,6 +35,10 @@ def client_tracker_attributes(
         attrs["connected_to"] = location
         if model := client.source_model:
             attrs["connected_to_model"] = model
+    if (reserved := client.is_reserved) is not None:
+        attrs["ip_reserved"] = reserved
+        if reserved_ip := client.reserved_ip:
+            attrs["reserved_ip"] = reserved_ip
     if not connected:
         return attrs
     attrs["connection_type"] = client.connection_type

@@ -160,6 +160,42 @@
                     "description": "(Optional) Name(s) or ID(s) of network(s) in which desired profile(s) are located. Defaults to all networks if not specified."
                 }
             }
+        },
+        "set_reservation": {
+            "name": "Set DHCP reservation",
+            "description": "Create one static DHCP reservation, pinning an IP address to a device's MAC address. Refused if the MAC or the address is already reserved (delete that reservation first).",
+            "fields": {
+                "mac": {
+                    "name": "MAC address",
+                    "description": "(Required) MAC address of the device, as aa:bb:cc:dd:ee:ff."
+                },
+                "ip": {
+                    "name": "IP address",
+                    "description": "(Required) IPv4 address to assign, inside the network's LAN subnet."
+                },
+                "name": {
+                    "name": "Name",
+                    "description": "(Optional) Description shown for the reservation, up to 64 characters."
+                },
+                "target_network": {
+                    "name": "Target network",
+                    "description": "(Optional) Name or ID of the network. Must resolve to exactly one network; defaults to the only network when there is one."
+                }
+            }
+        },
+        "delete_reservation": {
+            "name": "Delete DHCP reservation",
+            "description": "Remove the one static DHCP reservation for a device's MAC address.",
+            "fields": {
+                "mac": {
+                    "name": "MAC address",
+                    "description": "(Required) MAC address of the device whose reservation should be removed."
+                },
+                "target_network": {
+                    "name": "Target network",
+                    "description": "(Optional) Name or ID of the network. Must resolve to exactly one network; defaults to the only network when there is one."
+                }
+            }
         }
     },
     "selector": {

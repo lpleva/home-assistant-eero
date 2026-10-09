@@ -224,6 +224,32 @@ class EeroClient(EeroResource):
         return self.data.get("ip")
 
     @property
+    def reservation(self) -> dict | None:
+        """This client's DHCP reservation, or None (PR #173)."""
+        reservations = self.network.reservations
+        if reservations is None or not self.mac:
+            return None
+        mac = self.mac.strip().lower().replace("-", ":")
+        for reservation in reservations:
+            if str(reservation.get("mac") or "").strip().lower().replace("-", ":") == mac:
+                return reservation
+        return None
+
+    @property
+    def is_reserved(self) -> bool | None:
+        """True if this client's address is reserved; None if reservations are unknown."""
+        if self.network.reservations is None:
+            return None
+        return self.reservation is not None
+
+    @property
+    def reserved_ip(self) -> str | None:
+        """The reserved address, if this client has a reservation."""
+        if reservation := self.reservation:
+            return reservation.get("ip")
+        return None
+
+    @property
     def is_guest(self) -> bool | None:
         """Is guest."""
         return self.data.get("is_guest")

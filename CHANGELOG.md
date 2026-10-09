@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.9.5
+
+DHCP reservations, ported by hand from upstream PR #173 (credit to its author; it was not merged upstream at the time), with a stricter write path than the PR, since this is the first service in the fork that changes router configuration.
+
+- Every poll reads the network's reservations (its `reservations` resource URL, or the standard `<network>/reservations` path; same host and session as every other call). Client device trackers carry `ip_reserved` and `reserved_ip`, connected or not. A failed reservations read is logged once per network and leaves the attributes absent ("unknown"), while devices, trackers and the rest of the poll carry on; a dead session or a rate limit still propagates, as C3 and M2 require.
+- Two services, `eero.set_reservation` (mac, ip, name, target_network) and `eero.delete_reservation` (mac, target_network). What is stricter than the PR:
+  - Input is checked in a Home Assistant-free module (`reservations.py`) before any request: MAC format (six hex pairs, not broadcast, zero or multicast), IPv4 host address inside the LAN subnet read from the network's `dhcp` block (eero's automatic mode is 192.168.4.0/22; not the network, broadcast or router address; a private address when the subnet is unknown), name at most 64 characters with no control characters.
+  - Each call targets exactly one record: `target_network` must resolve to one network, set refuses a MAC that already has a reservation or an address reserved for another MAC, and delete sends `DELETE` to the one record's own URL (under this network's `/reservations/`), never to the collection and never by guessing.
+  - Bad input raises `ServiceValidationError`; an eero refusal raises `HomeAssistantError` naming the MAC and eero's reason. Nothing is swallowed.
+  - Dropped from the PR: the DEBUG dump of the raw reservations response (a whole-response log, which C2 forbids), the bare `except Exception` around the attribute read and around the fetch, and the "re-POST updates" assumption.
+- 35 new tests (88 in all): validation, the read, warn-once on failure, session expiry not swallowed, the exact `POST` body and `DELETE` URL, and error propagation.
+
+Not verified on a live network: the request and response shapes for `/reservations` are as the PR wrote them. The first set or delete on the house network is the test; a wrong shape surfaces as a `HomeAssistantError`, not a silent no-op.
+
 ## 1.9.4
 
 - Client device trackers carry a new read-only `connected_to_model` attribute (the model of the eero the client is connected to), and `connected_to` is kept after the client disconnects, so a tracker that reads not_home still says which eero last saw it. The live-connection attributes (connection type, addresses, band, channel) still disappear on disconnect. Ported by hand from upstream PR #179 (credit to its author); it was not merged upstream at the time.

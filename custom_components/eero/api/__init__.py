@@ -86,6 +86,9 @@ class EeroAPI:
         """Initialize."""
         self.data = EeroAccount(self, {})
         self.release_notes_cache: dict[str, dict[str, Any] | None] = {}
+        # Networks whose reservations fetch has already been reported as failing,
+        # so the warning is logged once rather than every poll (the N3 pattern).
+        self.reservations_warned: set[str] = set()
         self.save_location = save_location
         self.session = requests.Session()
         self.user_token = user_token
@@ -471,6 +474,16 @@ class EeroAPI:
                         network_data, "profiles"
                     )
 
+                if any(
+                    [
+                        not config,
+                        config.get(network_id, EeroUpdateConfig()).get_devices,
+                    ]
+                ):
+                    network_data["reservations"] = self.get_reservations(
+                        network_data
+                    )
+
                 update_data = network_data.get("updates") or {}
                 if config.get(network_id, EeroUpdateConfig()).get_release_notes:
                     try:
@@ -538,6 +551,49 @@ class EeroAPI:
             "count": len(resource_data),
             "data": resource_data,
         }
+
+    def get_reservations(self, network_data: dict) -> dict | None:
+        """Get the network's DHCP reservations (upstream PR #173).
+
+        Read from the network's `reservations` resource URL, or the standard
+        `<network url>/reservations` path when the resource map lacks it; the
+        same host and session as every other call. Returns {"count", "data"},
+        or None when the fetch failed, so callers can tell "no reservations"
+        from "unknown". A failure only decorates the device trackers, so it
+        must not take the network unavailable (as N2 reasons for release
+        notes); a dead session or a rate limit is not a decoration problem
+        and is re-raised. The failure is logged once per network, not every
+        poll.
+        """
+        network_url = network_data.get("url")
+        url = (network_data.get("resources") or {}).get("reservations")
+        if not url and network_url:
+            url = f"{network_url}/reservations"
+        if not url:
+            return None
+        try:
+            data = self.call(method=METHOD_GET, url=url)
+            if isinstance(data, dict):
+                if "data" not in data:
+                    raise EeroException(message="Reservations response has an unexpected shape")
+                data = data["data"]
+            if data is None:
+                data = []
+            if not isinstance(data, list) or not all(
+                isinstance(item, dict) for item in data
+            ):
+                raise EeroException(message="Reservations response has an unexpected shape")
+        except (EeroSessionExpired, EeroRateLimited):
+            raise
+        except EeroException as error:
+            if network_url not in self.reservations_warned:
+                self.reservations_warned.add(network_url)
+                _LOGGER.warning(
+                    "Could not read DHCP reservations for %s: %s", network_url, error
+                )
+            return None
+        self.reservations_warned.discard(network_url)
+        return {"count": len(data), "data": data}
 
     def update_activity(
         self,
