@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.6
+
+- The firmware update entity's title no longer repeats the version. eero reports the title as "eeroOS 7.17.2" and Home Assistant's Settings > Updates list prints the title followed by the latest version, so it read "eeroOS 7.17.2 v7.17.2"; it now reads "eeroOS v7.17.2". The idea is from upstream PR #176 (credit to its author; not merged upstream at the time), reimplemented: the PR dropped the title's last word unconditionally, which would also clip a title with no version ("eero OS" to "eero"). This drops a trailing word only when it equals the latest version, with or without a leading "v", in a Home Assistant-free module (`update_title.py`). `title` also returns None when the resource has vanished (H3).
+- 6 new tests.
+
 ## 1.9.5
 
 DHCP reservations, ported by hand from upstream PR #173 (credit to its author; it was not merged upstream at the time), with a stricter write path than the PR, since this is the first service in the fork that changes router configuration.

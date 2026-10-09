@@ -17,6 +17,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import EeroEntity, EeroEntityDescription
+from .update_title import firmware_title
 from .const import (
     CONF_EEROS,
     CONF_MISCELLANEOUS,
@@ -140,9 +141,15 @@ class EeroUpdateEntity(EeroEntity, UpdateEntity):
         """Title of the software.
 
         This helps to differentiate between the device or entity name
-        versus the title of the software installed.
+        versus the title of the software installed. eero puts the version on
+        the end of the title, which Home Assistant already shows beside it,
+        so a trailing copy of the latest version is dropped (update_title.py).
         """
-        return self.resource.target_firmware.title
+        if self.resource is None:
+            return None
+        return firmware_title(
+            self.resource.target_firmware.title, self.latest_version
+        )
 
     def install(self, version: str | None, backup: bool, **kwargs: Any) -> None:
         """Install the pending firmware.
