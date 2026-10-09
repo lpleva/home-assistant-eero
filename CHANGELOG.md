@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.9.4
+
+- Client device trackers carry a new read-only `connected_to_model` attribute (the model of the eero the client is connected to), and `connected_to` is kept after the client disconnects, so a tracker that reads not_home still says which eero last saw it. The live-connection attributes (connection type, addresses, band, channel) still disappear on disconnect. Ported by hand from upstream PR #179 (credit to its author); it was not merged upstream at the time.
+- `source`, `connectivity`, `interface` and the rx/tx rate blocks in a client record are treated as optional at the value level: the API sends explicit `null` for a client that is offline, and `.get("source", {})` only covers a missing key, so reading `source_location`, `channel_width_rx`, `channel_width_tx`, `signal` or `interface_frequency` could raise `AttributeError` on `None`. (The `source` fix is in #179; the others are the same pattern.)
+- The attribute composition moved to a Home Assistant-free module (`tracker_attributes.py`) so it can be unit-tested the way `device_removal.py` is; `extra_state_attributes` also returns `{}` when the resource has vanished (H3) rather than trusting Home Assistant never to ask.
+- 7 new tests (53 in all).
+
 ## 1.9.3
 
 - The config and options flows always offer the Advanced options step (polling interval, timeout, save responses; all with defaults). It used to appear only when the Home Assistant user had "advanced mode" on, through `show_advanced_options`, which HA deprecated and removes in 2027.6.

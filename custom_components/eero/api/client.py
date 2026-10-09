@@ -95,19 +95,25 @@ class EeroClient(EeroResource):
     def channel_width_rx(self) -> str | None:
         """Channel width RX."""
         return (
-            self.data.get("connectivity", {})
-            .get("rx_rate_info", {})
-            .get("channel_width")
+            (self.connectivity.get("rx_rate_info") or {}).get("channel_width")
         )
 
     @property
     def channel_width_tx(self) -> str | None:
         """Channel width TX."""
         return (
-            self.data.get("connectivity", {})
-            .get("tx_rate_info", {})
-            .get("channel_width")
+            (self.connectivity.get("tx_rate_info") or {}).get("channel_width")
         )
+
+    @property
+    def connectivity(self) -> dict:
+        """The connectivity block, or {} when absent or an explicit null.
+
+        `.get("connectivity", {})` only covers a missing key; the API sends
+        `"connectivity": null` for a client that is not connected, and `.get`
+        on None raises AttributeError.
+        """
+        return self.data.get("connectivity") or {}
 
     @property
     def connected(self) -> bool | None:
@@ -209,10 +215,8 @@ class EeroClient(EeroResource):
     @property
     def interface_frequency(self) -> tuple[str | None, str | None]:
         """Interface frequency."""
-        return (
-            self.data.get("interface", {}).get("frequency"),
-            self.data.get("interface", {}).get("frequency_unit"),
-        )
+        interface = self.data.get("interface") or {}
+        return (interface.get("frequency"), interface.get("frequency_unit"))
 
     @property
     def ip(self) -> str | None:
@@ -305,7 +309,7 @@ class EeroClient(EeroResource):
     @property
     def signal(self) -> tuple[int | None, str | None]:
         """Signal."""
-        if signal := self.data.get("connectivity", {}).get("signal"):
+        if signal := self.connectivity.get("signal"):
             parts = signal.split()
             try:
                 return (int(parts[0]), parts[1])
@@ -315,8 +319,18 @@ class EeroClient(EeroResource):
 
     @property
     def source_location(self) -> str | None:
-        """Source location."""
-        return self.data.get("source", {}).get("location")
+        """Location of the eero this client is, or was last, connected to.
+
+        The API keeps `source` populated after a client disconnects, so this
+        stays set while `connected` is False (upstream PR #179). `source` may
+        be an explicit null, hence `or {}`.
+        """
+        return (self.data.get("source") or {}).get("location")
+
+    @property
+    def source_model(self) -> str | None:
+        """Model of the eero this client is, or was last, connected to."""
+        return (self.data.get("source") or {}).get("model")
 
     @property
     def url_insights(self) -> str | None:

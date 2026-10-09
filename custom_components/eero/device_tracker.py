@@ -12,7 +12,6 @@ from homeassistant.components.device_tracker import (
     SourceType,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_MANUFACTURER
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -29,6 +28,7 @@ from .const import (
     DATA_COORDINATOR,
     DOMAIN as EERO_DOMAIN,
 )
+from .tracker_attributes import client_tracker_attributes
 from .util import client_allowed
 
 
@@ -168,29 +168,10 @@ class EeroDeviceTrackerEntity(EeroEntity, BaseScannerEntity):
         Implemented by platform classes. Convention for attribute names
         is lowercase snake_case.
         """
-        attrs = {}
-        if self.is_connected and self.resource.is_client:
-            attrs["connected_to"] = self.resource.source_location
-            attrs["connection_type"] = self.resource.connection_type
-            if ip_address := self.ip_address:
-                attrs["ip"] = ip_address
-            if mac_address := self.mac_address:
-                attrs["mac"] = mac_address
-            if hostname := self.hostname:
-                attrs["host_name"] = hostname
-            if manufacturer := self.resource.manufacturer:
-                attrs[ATTR_MANUFACTURER] = manufacturer
-            attrs["network_name"] = self.network.name
-            if self.resource.wireless:
-                frequency, frequency_unit = self.resource.interface_frequency
-                if frequency:
-                    attrs["band"] = (
-                        f"{frequency} {frequency_unit}"
-                        if frequency_unit
-                        else str(frequency)
-                    )
-                if self.resource.channel is not None:
-                    attrs["channel"] = self.resource.channel
-                if channel_width_rx := self.resource.channel_width_rx:
-                    attrs["channel_width_rx"] = channel_width_rx
-        return attrs
+        # The resource can be None once the API stops reporting it (H3); Home
+        # Assistant reads attributes only while available, but do not rely on it.
+        if (resource := self.resource) is None or not resource.is_client:
+            return {}
+        return client_tracker_attributes(
+            resource, bool(self.is_connected), self.network.name
+        )
