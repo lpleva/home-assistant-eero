@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "fork": "home-assistant-eero",
+  "upstream": "https://github.com/schmittx/home-assistant-eero.git",
+  "branch": "main",
+  "baseline": {
+    "sha": "2b66612771907ee808a9ebbe5d65a4be7490f7dd",
+    "date": "2025-09-19",
+    "subject": "Fix config flow bugs",
+    "note": "Upstream 1.8.1 tip (2025-09-19), the fork point; the fork was created 2026-07-20 with PRs #170/#169/#171/#174 merged. Covered by the full audit of 2026-09-07 (fork release 1.9.0; CHANGELOG 1.9.0). Upstream main has not moved since."
+  },
+  "notes": [
+    "2026-10-09: upstream's open PRs reviewed (none merged upstream): #179 and #173 ported by hand (fork 1.9.4, 1.9.5), #176's idea reimplemented (1.9.6), #181/#159/#148 already covered by the audit fixes. PRs are not commits on upstream/main, so they have no rows here."
+  ],
+  "commits": []
+}
