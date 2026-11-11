@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Client device trackers state their own "enabled by default" setting instead of inheriting Home Assistant's. Home Assistant 2026.11 (core PR #188883) changed `ScannerEntity`: new network-scanner trackers are always added disabled, every tracker gets a device of its own, and `device_info` is no longer final. The eero tracker subclasses `BaseScannerEntity`, which that change did not touch, so nothing changes on 2026.10 or 2026.11: newly seen clients still appear as enabled trackers, on the device `EeroEntity` describes, with the same unique IDs. The explicit `_attr_entity_registry_enabled_default = True` only guards against that default moving into the base class later.
+- 8 new tests (`test_device_tracker_defaults.py`) load the real `device_tracker.py` against stand-ins for Home Assistant and pin the enabled default, the device info source, the unique ID and the base class order.
+
 ## 1.9.6
 
 - The firmware update entity's title no longer repeats the version. eero reports the title as "eeroOS 7.17.2" and Home Assistant's Settings > Updates list prints the title followed by the latest version, so it read "eeroOS 7.17.2 v7.17.2"; it now reads "eeroOS v7.17.2". The idea is from upstream PR #176 (credit to its author; not merged upstream at the time), reimplemented: the PR dropped the title's last word unconditionally, which would also clip a title with no version ("eero OS" to "eero"). This drops a trailing word only when it equals the latest version, with or without a leading "v", in a Home Assistant-free module (`update_title.py`). `title` also returns None when the resource has vanished (H3).

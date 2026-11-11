@@ -100,6 +100,11 @@ class EeroDeviceTrackerEntity(EeroEntity, BaseScannerEntity):
     """Representation of an Eero device tracker entity."""
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    # Stated here rather than inherited: Home Assistant 2026.11 made ScannerEntity
+    # disabled by default (core PR #188883). BaseScannerEntity was left alone, so
+    # this matches what Home Assistant does today on 2026.10 and 2026.11; it keeps
+    # newly seen clients enabled if that default ever moves into the base class.
+    _attr_entity_registry_enabled_default = True
 
     def __init__(
         self,
