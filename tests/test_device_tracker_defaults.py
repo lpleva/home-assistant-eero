@@ -35,6 +35,7 @@ import pytest
 
 EERO_DIR = Path(__file__).resolve().parents[1] / "custom_components" / "eero"
 TRACKER_SOURCE = EERO_DIR / "device_tracker.py"
+INIT_SOURCE = EERO_DIR / "__init__.py"
 EERO_DEVICE_INFO = {"identifiers": {("eero", "client-1")}, "name": "Chloe iPad"}
 
 
@@ -229,3 +230,67 @@ def test_tracker_subclasses_base_scanner_entity_after_eero_entity() -> None:
     ]
 
     assert [base.id for base in tracker.bases] == ["EeroEntity", "BaseScannerEntity"]
+    # The name must be Home Assistant's BaseScannerEntity itself, not another
+    # class (ScannerEntity) imported under that name.
+    imported = [
+        (alias.name, alias.asname)
+        for node in tree.body
+        if isinstance(node, ast.ImportFrom)
+        and node.module == "homeassistant.components.device_tracker"
+        for alias in node.names
+    ]
+    assert ("BaseScannerEntity", None) in imported
+    assert "ScannerEntity" not in [name for name, _ in imported]
+    assert "BaseScannerEntity" not in [
+        alias.asname
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.Import, ast.ImportFrom))
+        for alias in node.names
+    ]
+
+
+def real_eero_entity_unique_id(network_id: str, resource_id: str | None, key: str) -> str:
+    """Run the real EeroEntity.unique_id body from __init__.py on plain values.
+
+    __init__.py imports Home Assistant, so it cannot be imported here; the
+    property's own source is cut out of the file and run instead.
+    """
+    tree = ast.parse(INIT_SOURCE.read_text())
+    (eero_entity,) = [
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "EeroEntity"
+    ]
+    (unique_id,) = [
+        node
+        for node in eero_entity.body
+        if isinstance(node, ast.FunctionDef) and node.name == "unique_id"
+    ]
+    unique_id.decorator_list = []
+    namespace: dict[str, Any] = {}
+    exec(  # noqa: S102 - the fork's own source, not input
+        compile(ast.Module(body=[unique_id], type_ignores=[]), str(INIT_SOURCE), "exec"),
+        namespace,
+    )
+    entity = types.SimpleNamespace(
+        network_id=network_id,
+        resource_id=resource_id,
+        entity_description=types.SimpleNamespace(key=key),
+    )
+    return namespace["unique_id"](entity)
+
+
+def test_real_eero_entity_unique_id_format() -> None:
+    """The real EeroEntity.unique_id is network-resource-key (network-key for a network).
+
+    The tests above use a stand-in EeroEntity; this one pins the format the
+    stand-in copies, so existing registry entries keep matching.
+    """
+    assert (
+        real_eero_entity_unique_id("1234567", "client-1", "device_tracker")
+        == "1234567-client-1-device_tracker"
+    )
+    assert (
+        real_eero_entity_unique_id("1234567", None, "device_tracker")
+        == "1234567-device_tracker"
+    )

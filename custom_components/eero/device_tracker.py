@@ -104,6 +104,9 @@ class EeroDeviceTrackerEntity(EeroEntity, BaseScannerEntity):
     # disabled by default (core PR #188883). BaseScannerEntity was left alone, so
     # this matches what Home Assistant does today on 2026.10 and 2026.11; it keeps
     # newly seen clients enabled if that default ever moves into the base class.
+    # Home Assistant reads this before the entity description, so a description
+    # that sets entity_registry_enabled_default = False is ignored, on purpose:
+    # every eero tracker is enabled when first added.
     _attr_entity_registry_enabled_default = True
 
     def __init__(

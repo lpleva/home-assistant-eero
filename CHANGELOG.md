@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-- Client device trackers state their own "enabled by default" setting instead of inheriting Home Assistant's. Home Assistant 2026.11 (core PR #188883) changed `ScannerEntity`: new network-scanner trackers are always added disabled, every tracker gets a device of its own, and `device_info` is no longer final. The eero tracker subclasses `BaseScannerEntity`, which that change did not touch, so nothing changes on 2026.10 or 2026.11: newly seen clients still appear as enabled trackers, on the device `EeroEntity` describes, with the same unique IDs. The explicit `_attr_entity_registry_enabled_default = True` only guards against that default moving into the base class later.
-- 8 new tests (`test_device_tracker_defaults.py`) load the real `device_tracker.py` against stand-ins for Home Assistant and pin the enabled default, the device info source, the unique ID and the base class order.
+- Ready for Home Assistant 2026.11, with nothing for you to do. That release changes how Home Assistant's built-in network trackers work: a newly found tracker is now added disabled, and a tracker that has a MAC address, a unique ID and a config entry gets a device of its own when its integration does not supply one. The eero integration is not built on the part that changed, so on both 2026.10 and 2026.11 a client the eero sees for the first time still shows up as an enabled device tracker, on the same eero client device as its other entities, and existing trackers keep their entity ids, their devices and their enabled or disabled state.
+- The tracker now says "enabled when first added" itself instead of relying on Home Assistant's default, so a later Home Assistant release that moves the disabled default further down cannot quietly turn new clients off.
 
 ## 1.9.6
 
